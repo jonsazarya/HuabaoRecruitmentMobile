@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -20,115 +19,83 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Header biru
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-            color: const Color.fromRGBO(29 , 93, 155, 100),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Welcome,',
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
-                    Text('Huabao Candidate',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
-                  ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 40),
+
+              Image.asset('assets/images/signup_logo.png', width: 150),
+              const SizedBox(height: 30),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildLabel('Nama'),
+              ),
+              _buildTextField(_nameController, 'Masukkan nama lengkap', Icons.person_outline),
+              const SizedBox(height: 16),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildLabel('Email'),
+              ),
+              _buildTextField(_emailController, 'your@email.com', Icons.email_outlined),
+              const SizedBox(height: 16),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildLabel('Password'),
+              ),
+              _buildPasswordField(_passwordController, _isPasswordVisible, () {
+                setState(() => _isPasswordVisible = !_isPasswordVisible);
+              }),
+              const SizedBox(height: 16),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildLabel('Konfirmasi Password'),
+              ),
+              _buildPasswordField(_confirmPasswordController, _isConfirmVisible, () {
+                setState(() => _isConfirmVisible = !_isConfirmVisible);
+              }),
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromRGBO(29, 93, 155, 100),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('REGISTRASI',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-                Image.asset('assets/images/huabao-logo.png', width: 60),
-              ],
-            ),
-          ),
+              ),
+              const SizedBox(height: 16),
 
-          // Body
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 16),
-                  const Center(
-                    child: Text(
-                      'SIGNUP',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromRGBO(29 , 93, 155, 100),
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  _buildLabel('Name'),
-                  _buildTextField(_nameController, 'Your full name', Icons.person_outline),
-                  const SizedBox(height: 16),
-
-                  _buildLabel('Email Address'),
-                  _buildTextField(_emailController, 'your@email.com', Icons.email_outlined),
-                  const SizedBox(height: 16),
-
-                  _buildLabel('Password'),
-                  _buildPasswordField(_passwordController, _isPasswordVisible, () {
-                    setState(() => _isPasswordVisible = !_isPasswordVisible);
-                  }),
-                  const SizedBox(height: 16),
-
-                  _buildLabel('Confirm Password'),
-                  _buildPasswordField(_confirmPasswordController, _isConfirmVisible, () {
-                    setState(() => _isConfirmVisible = !_isConfirmVisible);
-                  }),
-                  const SizedBox(height: 24),
-
-                  // Tombol Sign Up
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(29 , 93, 155, 100),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('SIGN UP',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Login link
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('Have an account already? '),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Text('Login',
-                              style: TextStyle(
-                                  color: Color.fromRGBO(29 , 93, 155, 100),
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
+                  const Text('Sudah punya akun? '),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Text('Login',
+                        style: TextStyle(
+                            color: Color.fromRGBO(29, 93, 155, 100),
+                            fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

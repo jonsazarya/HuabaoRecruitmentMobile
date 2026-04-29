@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'Huabao Recruitment',
       debugShowCheckedModeBanner: false, // hilangkan banner "DEBUG"
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromRGBO(29 , 93, 155, 100),),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromRGBO(29 , 93, 155, 100)),
       ),
       home: const SplashScreen(),
     );
