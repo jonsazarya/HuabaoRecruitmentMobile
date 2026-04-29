@@ -12,7 +12,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Otomatis pindah ke StartPage setelah 3 detik
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
@@ -25,15 +24,10 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/huabao-recruitment-logo.png',
-              width: 180,
-            ),
-          ],
+      body: SizedBox.expand(
+        child: Image.asset(
+          'assets/images/splash_screen.png',
+          fit: BoxFit.cover,
         ),
       ),
     );

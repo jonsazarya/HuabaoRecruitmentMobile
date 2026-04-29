@@ -6,53 +6,56 @@ class StartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
+      body: Stack(
         children: [
-          // Bagian atas — Logo (40% layar)
-          SizedBox(
-            height: screenHeight * 0.42,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/huabao-recruitment-logo.png',
-                    width: 160,
-                  ),
-                ],
-              ),
+          SizedBox.expand(
+            child: Image.asset(
+              'assets/images/splash_screen.png',
+              fit: BoxFit.cover,
             ),
           ),
 
-          Expanded(
-            child: ClipPath(
-              clipper: _WaveClipper(),
-              child: Container(
-                width: double.infinity,
-                color: const Color.fromRGBO(29 , 93, 155, 100),
-                padding: const EdgeInsets.fromLTRB(32, 60, 32, 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Rekrut Lebih Cepat,Tumbuh Lebih Hebat.',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        height: 1.4,
-                      ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(24, 36, 16, 16),
+              decoration: const BoxDecoration(
+                color: Color.fromRGBO(29, 93, 155, 0.92),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(36),
+                  topRight: Radius.circular(36),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Rekrut Lebih Cepat,\nTumbuh Lebih Hebat.',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.4,
                     ),
-                    const SizedBox(height: 24),
+                  ),
+                  const SizedBox(height: 8),
 
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: ElevatedButton.icon(
+                  const Text(
+                    'Platform rekrutmen resmi Huabao Indonesia.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color.fromARGB(255, 201, 201, 201),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton.icon(
                         onPressed: () {
                           Navigator.pushReplacement(
                             context,
@@ -61,29 +64,31 @@ class StartPage extends StatelessWidget {
                             ),
                           );
                         },
-                        icon: const Icon(Icons.arrow_forward),
+                        icon: const Icon(Icons.arrow_forward, size: 18),
                         label: const Text(
                           'START',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF4CAF50),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 14,
+                            horizontal: 28,
+                            vertical: 12,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
+                          elevation: 3,
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -91,21 +96,4 @@ class StartPage extends StatelessWidget {
       ),
     );
   }
-}
-
-class _WaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.moveTo(0, 60);
-    path.quadraticBezierTo(size.width * 0.25, 0, size.width * 0.5, 30);
-    path.quadraticBezierTo(size.width * 0.75, 60, size.width, 20);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
