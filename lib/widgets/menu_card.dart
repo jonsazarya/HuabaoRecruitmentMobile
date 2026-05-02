@@ -5,12 +5,14 @@ class MenuCard extends StatelessWidget {
   final String title;
   final Color color;
   final IconData icon;
+  final VoidCallback? onTap;
 
   const MenuCard({
     super.key,
     required this.title,
     required this.color,
     required this.icon,
+    this.onTap,
   });
 
   @override
@@ -37,7 +39,7 @@ class MenuCard extends StatelessWidget {
             ),
           ),
           child: InkWell(
-            onTap: () {},
+            onTap: onTap,
             borderRadius: BorderRadius.circular(20),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
