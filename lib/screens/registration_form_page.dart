@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_diri_page.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_keluarga_page.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_peminatan_page.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_bpjs_page.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_pengalaman_kerja_page.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_kursus_page.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_kontak_page.dart';
+import 'package:recruitment_mobile/screens/registration_forms/data_alamat_page.dart';
 
 class RegistrationFormPage extends StatelessWidget {
   const RegistrationFormPage({super.key});
@@ -12,6 +20,17 @@ class RegistrationFormPage extends StatelessWidget {
     {'icon': Icons.school_outlined, 'title': 'Data Kursus / Pelatihan / Sertifikasi'},
     {'icon': Icons.phone_outlined, 'title': 'Data Kontak'},
     {'icon': Icons.location_on_outlined, 'title': 'Data Alamat'},
+  ];
+
+  static const List<Widget> _pages = [
+    DataDiriPage(),
+    DataKeluargaPage(),
+    DataPeminatanPage(),
+    DataBpjsPage(),
+    DataPengalamanKerjaPage(),
+    DataKursusPage(),
+    DataKontakPage(),
+    DataAlamatPage(),
   ];
 
   @override
@@ -55,7 +74,10 @@ class RegistrationFormPage extends StatelessWidget {
                 style: const TextStyle(fontSize: 14),
               ),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => _pages[index]),
+              ),
             ),
           );
         },
