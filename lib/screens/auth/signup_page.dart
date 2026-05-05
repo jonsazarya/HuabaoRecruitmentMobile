@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:recruitment_mobile/services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -14,6 +15,7 @@ class _SignupPageState extends State<SignupPage> {
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmVisible = false;
+  bool _isLoading = false; // ← tambahkan
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,6 @@ class _SignupPageState extends State<SignupPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-
               Image.asset('assets/images/signup_logo.png', width: 150),
               const SizedBox(height: 30),
 
@@ -34,14 +35,16 @@ class _SignupPageState extends State<SignupPage> {
                 alignment: Alignment.centerLeft,
                 child: _buildLabel('Nama'),
               ),
-              _buildTextField(_nameController, 'Masukkan nama lengkap', Icons.person_outline),
+              _buildTextField(_nameController, 'Masukkan nama lengkap',
+                  Icons.person_outline),
               const SizedBox(height: 16),
 
               Align(
                 alignment: Alignment.centerLeft,
                 child: _buildLabel('Email'),
               ),
-              _buildTextField(_emailController, 'your@email.com', Icons.email_outlined),
+              _buildTextField(
+                  _emailController, 'your@email.com', Icons.email_outlined),
               const SizedBox(height: 16),
 
               Align(
@@ -57,25 +60,30 @@ class _SignupPageState extends State<SignupPage> {
                 alignment: Alignment.centerLeft,
                 child: _buildLabel('Konfirmasi Password'),
               ),
-              _buildPasswordField(_confirmPasswordController, _isConfirmVisible, () {
+              _buildPasswordField(_confirmPasswordController, _isConfirmVisible,
+                  () {
                 setState(() => _isConfirmVisible = !_isConfirmVisible);
               }),
               const SizedBox(height: 24),
 
+              // ── Tombol Registrasi ──────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromRGBO(29, 93, 155, 100),
+                    backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('REGISTRASI',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('REGISTRASI',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -88,7 +96,7 @@ class _SignupPageState extends State<SignupPage> {
                     onTap: () => Navigator.pop(context),
                     child: const Text('Login',
                         style: TextStyle(
-                            color: Color.fromRGBO(29, 93, 155, 100),
+                            color: Color.fromRGBO(29, 93, 155, 1),
                             fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -98,6 +106,72 @@ class _SignupPageState extends State<SignupPage> {
         ),
       ),
     );
+  }
+
+  // ── Fungsi Register ──────────────────────────────────
+  Future<void> _register() async {
+    // Validasi field kosong
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field harus diisi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Validasi password cocok
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password tidak cocok'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validasi panjang password
+    if (_passwordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password minimal 6 karakter'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await AuthService.register(
+      _nameController.text.trim(),
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registrasi berhasil! Silakan login.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Registrasi gagal'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildLabel(String text) {

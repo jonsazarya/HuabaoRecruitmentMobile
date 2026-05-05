@@ -64,7 +64,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
       return;
     }
 
-    if (!mounted) return; // ← tambahkan pengecekan mounted
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -72,7 +72,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
 
     try {
       final result = await ApiService.createPersonal({
-        'user_id': uid,
+        'user_id': 11,
         'ktp': _ktpController.text,
         'status': 'aktif',
         'kk': '',
