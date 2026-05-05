@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:recruitment_mobile/widgets/menu_card.dart';
 import 'package:recruitment_mobile/screens/setting_page.dart';
@@ -146,6 +147,7 @@ class _HomeBody extends StatefulWidget {
 
 class _HomeBodyState extends State<_HomeBody> {
   final _searchController = TextEditingController();
+  final User? _user = FirebaseAuth.instance.currentUser;
   String _searchQuery = '';
 
   // Data semua menu
@@ -228,13 +230,18 @@ class _HomeBodyState extends State<_HomeBody> {
                     ),
                   ],
                 ),
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.person, color: Colors.white, size: 20),
-                    SizedBox(width: 4),
+                    _user?.photoURL != null
+                        ? CircleAvatar(
+                            radius: 14,
+                            backgroundImage: NetworkImage(_user!.photoURL!),
+                          )
+                        : const Icon(Icons.person, color: Colors.white, size: 20),
+                    const SizedBox(width: 6),
                     Text(
-                      'Jones A',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+                      _getFirstName(_user?.displayName ?? 'Pengguna'),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ],
                 ),
@@ -242,7 +249,6 @@ class _HomeBodyState extends State<_HomeBody> {
             ),
           ),
 
-          // ── SLIDER (hanya tampil saat tidak search) ───────
           if (_searchQuery.isEmpty) ...[
             const SizedBox(height: 16),
             CarouselSlider(
@@ -286,7 +292,6 @@ class _HomeBodyState extends State<_HomeBody> {
                   hintText: 'Search',
                   prefixIcon:
                       const Icon(Icons.search, color: Colors.grey),
-                  // Tombol clear saat ada teks
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.close,
@@ -305,13 +310,11 @@ class _HomeBodyState extends State<_HomeBody> {
             ),
           ),
 
-          // ── HASIL PENCARIAN / MENU GRID ───────────────────
           if (_searchQuery.isNotEmpty) ...[
-            // Tampilan hasil search sebagai list
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Text(
-                'Hasil pencarian "${_searchQuery}" : ${_filteredMenus.length} ditemukan',
+                'Hasil pencarian "$_searchQuery" : ${_filteredMenus.length} ditemukan',
                 style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
@@ -342,7 +345,7 @@ class _HomeBodyState extends State<_HomeBody> {
                 physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 itemCount: _filteredMenus.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final menu = _filteredMenus[index];
@@ -392,7 +395,6 @@ class _HomeBodyState extends State<_HomeBody> {
                 },
               ),
           ] else ...[
-            // Tampilan normal grid menu
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: GridView.count(
@@ -482,5 +484,10 @@ class _HomeBodyState extends State<_HomeBody> {
         ],
       ),
     );
+  }
+
+  String _getFirstName(String fullName) {
+    if (fullName.isEmpty) return 'Pengguna';
+    return fullName.split(' ').first;
   }
 }

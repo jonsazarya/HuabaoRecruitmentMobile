@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:recruitment_mobile/services/api_service.dart';
 
 class DataDiriPage extends StatefulWidget {
   const DataDiriPage({super.key});
@@ -21,6 +23,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
   String? _selectedStatusPernikahan;
   String? _selectedPendidikan;
   String? _selectedLokasiKerja;
+  bool _isLoading = false; // ← tambahkan
 
   final List<String> _agamaOptions = [
     'Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'
@@ -35,6 +38,116 @@ class _DataDiriPageState extends State<DataDiriPage> {
   final List<String> _lokasiKerjaOptions = [
     'Jakarta', 'Morowali', 'Lainnya'
   ];
+
+  // ── Format tanggal dd/MM/yyyy → ISO untuk API ────────
+  String _toIsoDate(String date) {
+    try {
+      final parts = date.split('/');
+      if (parts.length == 3) {
+        return '${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z';
+      }
+      return date;
+    } catch (e) {
+      return date;
+    }
+  }
+
+  // ── Fungsi Simpan ke API ─────────────────────────────
+  Future<void> _simpan() async {
+    if (_ktpController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nomor KTP harus diisi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return; // ← tambahkan pengecekan mounted
+    setState(() => _isLoading = true);
+
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+
+    try {
+      final result = await ApiService.createPersonal({
+        'user_id': uid,
+        'ktp': _ktpController.text,
+        'status': 'aktif',
+        'kk': '',
+        'gender': _selectedJenisKelamin ?? '',
+        'religion': _selectedAgama ?? '',
+        'birth_place': _tempatLahirController.text,
+        'birth_date': _tanggalLahirController.text.isNotEmpty
+            ? _toIsoDate(_tanggalLahirController.text)
+            : '',
+        'marital_status': _selectedStatusPernikahan ?? '',
+        'nomor_pencarikerja': _nomorAK1Controller.text,
+        'education_stage': _selectedPendidikan ?? '',
+        'education_major': _jurusanController.text,
+        'education_instansi': _asalSekolahController.text,
+        'lokasi_kerja_yang_diharapkan': _selectedLokasiKerja ?? '',
+        'email': email,
+        'bpjs_kesehatan': '',
+        'status_bpjs': '',
+        'catatan_bpjs': '',
+        'bpjs_ketenagakerjaan': '',
+        'npwp': '',
+        'jenis_npwp': '',
+        'status_npwp': '',
+        'no_wa': '',
+        'phone': '',
+        'instagram': '',
+        'linkedin': '',
+        'facebook': '',
+        'kontak_darurat_hubungan': '',
+        'kontak_darurat_name': '',
+        'kontak_darurat_hp': '',
+        'kategori_lainnya': '',
+        'current_salary': 0,
+        'expected_salary': 0,
+        'kategori': '',
+        'posisi_yang_dilamar': '',
+        'posisi_yang_dilamar_lainnya': '',
+        'has_experience': 'tidak',
+        'bpjs_created_at': '',
+      });
+
+      debugPrint('Response API: $result');
+
+      if (!mounted) return; // ← cek mounted setelah await
+      setState(() => _isLoading = false);
+
+      if (result['data'] != null || result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data Diri berhasil disimpan!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                result['message']?.toString() ?? 'Gagal menyimpan data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+      if (!mounted) return; // ← cek mounted setelah await
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +170,6 @@ class _DataDiriPageState extends State<DataDiriPage> {
             _buildField('Nama Lengkap :', _namaController),
             _buildField('Nomor KTP :', _ktpController,
                 keyboardType: TextInputType.number),
-
             _buildDropdown(
               label: 'Agama :',
               value: _selectedAgama,
@@ -66,7 +178,6 @@ class _DataDiriPageState extends State<DataDiriPage> {
               onChanged: (v) => setState(() => _selectedAgama = v),
             ),
             const SizedBox(height: 12),
-
             _buildDropdown(
               label: 'Jenis Kelamin :',
               value: _selectedJenisKelamin,
@@ -75,15 +186,11 @@ class _DataDiriPageState extends State<DataDiriPage> {
               onChanged: (v) => setState(() => _selectedJenisKelamin = v),
             ),
             const SizedBox(height: 12),
-
             _buildField('Tempat Lahir :', _tempatLahirController),
-
-            // Tanggal Lahir dengan date picker
             _buildLabel('Tanggal Lahir :'),
             const SizedBox(height: 4),
             _buildDateField(_tanggalLahirController),
             const SizedBox(height: 12),
-
             _buildDropdown(
               label: 'Status Pernikahan :',
               value: _selectedStatusPernikahan,
@@ -93,9 +200,8 @@ class _DataDiriPageState extends State<DataDiriPage> {
                   setState(() => _selectedStatusPernikahan = v),
             ),
             const SizedBox(height: 12),
-
-            _buildField('Nomor Pencari Kerja (AK 1) :', _nomorAK1Controller),
-
+            _buildField(
+                'Nomor Pencari Kerja (AK 1) :', _nomorAK1Controller),
             _buildDropdown(
               label: 'Pendidikan Terakhir :',
               value: _selectedPendidikan,
@@ -104,10 +210,9 @@ class _DataDiriPageState extends State<DataDiriPage> {
               onChanged: (v) => setState(() => _selectedPendidikan = v),
             ),
             const SizedBox(height: 12),
-
             _buildField('Jurusan :', _jurusanController),
-            _buildField('Asal Sekolah/Universitas :', _asalSekolahController),
-
+            _buildField(
+                'Asal Sekolah/Universitas :', _asalSekolahController),
             _buildDropdown(
               label: 'Lokasi Kerja yang Diharapkan :',
               value: _selectedLokasiKerja,
@@ -117,12 +222,12 @@ class _DataDiriPageState extends State<DataDiriPage> {
             ),
             const SizedBox(height: 24),
 
-            // Tombol Simpan
+            // ← Tombol Simpan sudah terhubung ke _simpan()
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _isLoading ? null : _simpan,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                   foregroundColor: Colors.white,
@@ -130,11 +235,13 @@ class _DataDiriPageState extends State<DataDiriPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'SIMPAN',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'SIMPAN',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
               ),
             ),
             const SizedBox(height: 20),
@@ -144,7 +251,6 @@ class _DataDiriPageState extends State<DataDiriPage> {
     );
   }
 
-  // Date picker field
   Widget _buildDateField(TextEditingController controller) {
     return Container(
       decoration: BoxDecoration(
@@ -193,8 +299,8 @@ class _DataDiriPageState extends State<DataDiriPage> {
 
   Widget _buildLabel(String label) {
     return Text(label,
-        style: const TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w500));
+        style:
+            const TextStyle(fontSize: 13, fontWeight: FontWeight.w500));
   }
 
   Widget _buildField(

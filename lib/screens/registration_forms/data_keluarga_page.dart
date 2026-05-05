@@ -16,7 +16,7 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
 
   String? _selectedHubungan;
   String? _selectedJenisKelamin;
-  String _namaFile = '';
+  final String _namaFile = '';
 
   final List<String> _hubunganOptions = [
     'Ayah', 'Ibu', 'Suami', 'Istri', 'Anak', 'Saudara', 'Lainnya'

@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final User? _user = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
@@ -40,33 +48,42 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 40,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 48,
-                    color: Color.fromRGBO(29, 93, 155, 1),
-                  ),
+                  backgroundImage: _user?.photoURL != null
+                      ? NetworkImage(_user!.photoURL!)
+                      : null,
+                  child: _user?.photoURL == null
+                      ? const Icon(
+                          Icons.person,
+                          size: 48,
+                          color: Color.fromRGBO(29, 93, 155, 1),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Jones Azarya Tomassoyan',
-                  style: TextStyle(
+
+                Text(
+                  _user?.displayName ?? 'Pengguna',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'jones.azarya@email.com',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+
+                Text(
+                  _user?.email ?? '-',
+                  style: const TextStyle(
+                      color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
 
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -74,7 +91,8 @@ class ProfilePage extends StatelessWidget {
                   ),
                   child: const Text(
                     'Pelamar Aktif',
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+                    style:
+                        TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
               ],
@@ -83,18 +101,50 @@ class ProfilePage extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          _buildSectionTitle('Informasi Akun'),
+          _buildInfoItem(
+            Icons.email_outlined,
+            'Email',
+            _user?.email ?? '-',
+          ),
+          _buildInfoItem(
+            Icons.verified_outlined,
+            'Status Email',
+            _user?.emailVerified == true
+                ? 'Sudah Terverifikasi ✓'
+                : 'Belum Terverifikasi',
+          ),
+          _buildInfoItem(
+            Icons.login_outlined,
+            'Login Dengan',
+            _getLoginProvider(),
+          ),
+          _buildInfoItem(
+            Icons.fingerprint_outlined,
+            'UID',
+            _user?.uid ?? '-',
+          ),
+
+          const SizedBox(height: 8),
+
           _buildSectionTitle('Informasi Pribadi'),
-          _buildInfoItem(Icons.badge_outlined, 'NIK', '3201234567890001'),
-          _buildInfoItem(Icons.phone_outlined, 'No. Telepon', '+62 812 3456 7890'),
-          _buildInfoItem(Icons.location_on_outlined, 'Alamat', 'Jakarta, Indonesia'),
-          _buildInfoItem(Icons.cake_outlined, 'Tanggal Lahir', '01 Januari 2000'),
-          _buildInfoItem(Icons.school_outlined, 'Pendidikan', 'S1 Teknik Informatika'),
+          _buildInfoItem(
+              Icons.badge_outlined, 'NIK', '- (belum diisi)'),
+          _buildInfoItem(
+              Icons.phone_outlined, 'No. Telepon', '- (belum diisi)'),
+          _buildInfoItem(
+              Icons.location_on_outlined, 'Alamat', '- (belum diisi)'),
+          _buildInfoItem(
+              Icons.cake_outlined, 'Tanggal Lahir', '- (belum diisi)'),
+          _buildInfoItem(
+              Icons.school_outlined, 'Pendidikan', '- (belum diisi)'),
 
           const SizedBox(height: 8),
 
           _buildSectionTitle('Status Lamaran'),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            margin: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 4),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -110,8 +160,8 @@ class ProfilePage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatusCount('Diajukan', '2', Colors.blue),
-                _buildStatusCount('Proses', '1', Colors.orange),
+                _buildStatusCount('Diajukan', '0', Colors.blue),
+                _buildStatusCount('Proses', '0', Colors.orange),
                 _buildStatusCount('Diterima', '0', Colors.green),
                 _buildStatusCount('Ditolak', '0', Colors.red),
               ],
@@ -122,6 +172,21 @@ class ProfilePage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Cek provider login (Email atau Google)
+  String _getLoginProvider() {
+    if (_user == null) return '-';
+    final providers = _user!.providerData;
+    if (providers.isEmpty) return '-';
+    switch (providers.first.providerId) {
+      case 'google.com':
+        return 'Google';
+      case 'password':
+        return 'Email & Password';
+      default:
+        return providers.first.providerId;
+    }
   }
 
   Widget _buildSectionTitle(String title) {
@@ -161,17 +226,22 @@ class ProfilePage extends StatelessWidget {
               color: const Color.fromRGBO(29, 93, 155, 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: const Color.fromRGBO(29, 93, 155, 1), size: 18),
+            child: Icon(icon,
+                color: const Color.fromRGBO(29, 93, 155, 1), size: 18),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              Text(value,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 11, color: Colors.grey)),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
         ],
       ),
@@ -189,7 +259,8 @@ class ProfilePage extends StatelessWidget {
             color: color,
           ),
         ),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        Text(label,
+            style: const TextStyle(fontSize: 11, color: Colors.grey)),
       ],
     );
   }

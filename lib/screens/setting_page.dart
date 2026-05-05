@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:recruitment_mobile/services/auth_service.dart';
+import 'package:recruitment_mobile/screens/auth/login_page.dart';
 import 'package:recruitment_mobile/screens/settings/edit_profile_page.dart';
 import 'package:recruitment_mobile/screens/settings/change_password_page.dart';
 import 'package:recruitment_mobile/screens/settings/change_email_page.dart';
@@ -51,73 +53,46 @@ class SettingPage extends StatelessWidget {
 
           // ── SECTION AKUN ──────────────────────────────────
           _buildSectionTitle('Akun'),
-          _buildSettingItem(
-            context,
-            Icons.person_outline,
-            'Edit Profil',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const EditProfilePage())),
-          ),
-          _buildSettingItem(
-            context,
-            Icons.lock_outline,
-            'Ubah Password',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ChangePasswordPage())),
-          ),
-          _buildSettingItem(
-            context,
-            Icons.email_outlined,
-            'Ubah Email',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ChangeEmailPage())),
-          ),
+          _buildSettingItem(context, Icons.person_outline, 'Edit Profil',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const EditProfilePage()))),
+          _buildSettingItem(context, Icons.lock_outline, 'Ubah Password',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ChangePasswordPage()))),
+          _buildSettingItem(context, Icons.email_outlined, 'Ubah Email',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const ChangeEmailPage()))),
 
           const SizedBox(height: 8),
 
           // ── SECTION APLIKASI ──────────────────────────────
           _buildSectionTitle('Aplikasi'),
-          _buildSettingItem(
-            context,
-            Icons.notifications_outlined,
-            'Notifikasi',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const NotificationPage())),
-          ),
-          _buildSettingItem(
-            context,
-            Icons.language_outlined,
-            'Bahasa',
-            trailing: 'Indonesia',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const LanguagePage())),
-          ),
+          _buildSettingItem(context, Icons.notifications_outlined, 'Notifikasi',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const NotificationPage()))),
+          _buildSettingItem(context, Icons.language_outlined, 'Bahasa',
+              trailing: 'Indonesia',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const LanguagePage()))),
 
           const SizedBox(height: 8),
 
           // ── SECTION LAINNYA ───────────────────────────────
           _buildSectionTitle('Lainnya'),
+          _buildSettingItem(context, Icons.info_outline, 'Tentang Aplikasi',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const AboutAppPage()))),
+          _buildSettingItem(context, Icons.help_outline, 'Bantuan',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const HelpPage()))),
           _buildSettingItem(
-            context,
-            Icons.info_outline,
-            'Tentang Aplikasi',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const AboutAppPage())),
-          ),
-          _buildSettingItem(
-            context,
-            Icons.help_outline,
-            'Bantuan',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const HelpPage())),
-          ),
-          _buildSettingItem(
-            context,
-            Icons.privacy_tip_outlined,
-            'Kebijakan Privasi',
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PrivacyPolicyPage())),
-          ),
+              context, Icons.privacy_tip_outlined, 'Kebijakan Privasi',
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PrivacyPolicyPage()))),
 
           const SizedBox(height: 16),
 
@@ -128,32 +103,7 @@ class SettingPage extends StatelessWidget {
               width: double.infinity,
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // nanti sambungkan ke logout API
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Keluar'),
-                      content: const Text('Apakah kamu yakin ingin keluar?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Batal'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            // Navigator.pushReplacement ke LoginPage
-                          },
-                          child: const Text(
-                            'Keluar',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                onPressed: () => _showLogoutDialog(context),
                 icon: const Icon(Icons.logout),
                 label: const Text(
                   'Keluar',
@@ -171,6 +121,38 @@ class SettingPage extends StatelessWidget {
           ),
 
           const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+
+  // ── Dialog Konfirmasi Logout ───────────────────────────
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Keluar'),
+        content: const Text('Apakah kamu yakin ingin keluar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await AuthService.logout();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false, // hapus semua route
+              );
+            },
+            child: const Text(
+              'Keluar',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );

@@ -47,7 +47,7 @@ class _NotificationPageState extends State<NotificationPage> {
               onChanged: (value) {
                 setState(() => _isNotificationActive = value);
               },
-              activeColor: const Color.fromRGBO(29, 93, 155, 1),
+              activeThumbColor: const Color.fromRGBO(29, 93, 155, 1),
             ),
           ),
         ),

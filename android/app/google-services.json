@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "774978931841",
+    "project_id": "huabao-recruitment",
+    "storage_bucket": "huabao-recruitment.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774978931841:android:083db14320334a8070d180",
+        "android_client_info": {
+          "package_name": "com.example.recruitment_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "774978931841-ncsh5kmrgufpfi6dej2hpnigi03pmbr0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.recruitment_mobile",
+            "certificate_hash": "70098ea74238a2b952833da1f1a0c01006b5c401"
+          }
+        },
+        {
+          "client_id": "774978931841-us65bmctraesigkrb92ko2gc2921li40.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbax2WkqHaIejCC_9PLtuXoLw_FEPmStA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "774978931841-us65bmctraesigkrb92ko2gc2921li40.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "774978931841-06n1ibre881pq1icnr03o284m8mcpoba.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.recruitmentMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
