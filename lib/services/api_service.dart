@@ -1,24 +1,25 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'http://10.24.172.60:8000/api';
   
   static const String panel = 'admin';
 
   static Future<Map<String, String>> getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('api_token') ?? '123'; 
+    final token = prefs.getString('backend_token');
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'Bearer $token',
+      'Authorization': 'Bearer ${token ?? ""}',
     };
   }
 
-  static Future<Map<String, dynamic>> createPersonal(
-      Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createPersonal(Map<String, dynamic> data) async 
+  {
     try {
       final headers = await getHeaders();
       final response = await http.post(
@@ -26,9 +27,16 @@ class ApiService {
         headers: headers,
         body: jsonEncode(data),
       );
-      debugPrint('Status: ${response.statusCode}');
-      debugPrint('Body: ${response.body}');
-      return jsonDecode(response.body);
+
+      final result = jsonDecode(response.body);
+
+      if (response.statusCode == 401) {
+        // Logika jika token tidak valid (contoh: hapus prefs dan paksa login ulang)
+        debugPrint('Sesi telah berakhir, silakan login kembali.');
+        return {'success': false, 'message': 'Unauthorized', 'code': 401};
+      }
+
+      return result;
     } catch (e) {
       debugPrint('Error: $e');
       return {'success': false, 'message': e.toString()};

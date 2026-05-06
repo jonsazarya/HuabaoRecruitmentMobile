@@ -1,5 +1,7 @@
+import 'dart:convert'; // Wajib untuk jsonDecode
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Wajib untuk ambil ID lokal
 import 'package:recruitment_mobile/services/api_service.dart';
 
 class DataDiriPage extends StatefulWidget {
@@ -23,7 +25,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
   String? _selectedStatusPernikahan;
   String? _selectedPendidikan;
   String? _selectedLokasiKerja;
-  bool _isLoading = false; // ← tambahkan
+  bool _isLoading = false;
 
   final List<String> _agamaOptions = [
     'Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'
@@ -39,12 +41,13 @@ class _DataDiriPageState extends State<DataDiriPage> {
     'Jakarta', 'Morowali', 'Lainnya'
   ];
 
-  // ── Format tanggal dd/MM/yyyy → ISO untuk API ────────
+  // Format tanggal untuk API (YYYY-MM-DD)
   String _toIsoDate(String date) {
     try {
       final parts = date.split('/');
       if (parts.length == 3) {
-        return '${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z';
+        // Balik dari dd/mm/yyyy ke yyyy-mm-dd
+        return '${parts[2]}-${parts[1]}-${parts[0]}';
       }
       return date;
     } catch (e) {
@@ -52,99 +55,79 @@ class _DataDiriPageState extends State<DataDiriPage> {
     }
   }
 
-  // ── Fungsi Simpan ke API ─────────────────────────────
   Future<void> _simpan() async {
+    // 1. Validasi Input Dasar
     if (_ktpController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nomor KTP harus diisi'),
-          backgroundColor: Colors.orange,
-        ),
+        const SnackBar(content: Text('Nomor KTP harus diisi'), backgroundColor: Colors.orange),
       );
       return;
     }
 
-    if (!mounted) return;
     setState(() => _isLoading = true);
 
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
-
     try {
+      // 2. Ambil ID User Lokal (Integer) sesuai dokumentasi image_95d2cb.png
+      final prefs = await SharedPreferences.getInstance();
+      final String? userJson = prefs.getString('user_data');
+      
+      if (userJson == null) {
+        throw Exception("Sesi user tidak ditemukan. Silakan login kembali.");
+      }
+      
+      final userData = jsonDecode(userJson);
+      final int localUserId = userData['id']; // ID integer dari MySQL/PostgreSQL
+      final email = FirebaseAuth.instance.currentUser?.email ?? '';
+
+      // 3. Kirim Data ke API (Semua field required di image_95d2cb.png harus terisi)
       final result = await ApiService.createPersonal({
-        'user_id': 11,
+        'user_id': localUserId, 
         'ktp': _ktpController.text,
         'status': 'aktif',
-        'kk': '',
-        'gender': _selectedJenisKelamin ?? '',
-        'religion': _selectedAgama ?? '',
-        'birth_place': _tempatLahirController.text,
+        'kk': '-', // Beri default jika tidak ada input agar tidak error 422
+        'gender': _selectedJenisKelamin ?? '-',
+        'religion': _selectedAgama ?? '-',
+        'birth_place': _tempatLahirController.text.isEmpty ? '-' : _tempatLahirController.text,
         'birth_date': _tanggalLahirController.text.isNotEmpty
             ? _toIsoDate(_tanggalLahirController.text)
-            : '',
-        'marital_status': _selectedStatusPernikahan ?? '',
+            : null,
+        'marital_status': _selectedStatusPernikahan ?? '-',
         'nomor_pencarikerja': _nomorAK1Controller.text,
-        'education_stage': _selectedPendidikan ?? '',
+        'education_stage': _selectedPendidikan ?? '-',
         'education_major': _jurusanController.text,
         'education_instansi': _asalSekolahController.text,
-        'lokasi_kerja_yang_diharapkan': _selectedLokasiKerja ?? '',
+        'lokasi_kerja_yang_diharapkan': _selectedLokasiKerja ?? '-',
         'email': email,
-        'bpjs_kesehatan': '',
-        'status_bpjs': '',
-        'catatan_bpjs': '',
-        'bpjs_ketenagakerjaan': '',
-        'npwp': '',
-        'jenis_npwp': '',
-        'status_npwp': '',
-        'no_wa': '',
-        'phone': '',
-        'instagram': '',
-        'linkedin': '',
-        'facebook': '',
-        'kontak_darurat_hubungan': '',
-        'kontak_darurat_name': '',
-        'kontak_darurat_hp': '',
-        'kategori_lainnya': '',
+        'has_experience': 'tidak',
         'current_salary': 0,
         'expected_salary': 0,
-        'kategori': '',
-        'posisi_yang_dilamar': '',
-        'posisi_yang_dilamar_lainnya': '',
-        'has_experience': 'tidak',
-        'bpjs_created_at': '',
+        // Tambahkan field kosong lainnya agar lolos validasi 'required' Filament
+        'phone': '-',
+        'no_wa': '-',
       });
 
-      debugPrint('Response API: $result');
-
-      if (!mounted) return; // ← cek mounted setelah await
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (result['data'] != null || result['success'] == true) {
+      // 4. Cek Response
+      if (result['success'] == true || result['data'] != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data Diri berhasil disimpan!'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Data Diri berhasil disimpan!'), backgroundColor: Colors.green),
         );
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                result['message']?.toString() ?? 'Gagal menyimpan data'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // Tampilkan pesan error spesifik dari Laravel (misal: "KTP sudah terdaftar")
+        String errorMsg = result['message']?.toString() ?? 'Gagal menyimpan data';
+        if (result['errors'] != null) {
+          errorMsg = result['errors'].toString();
+        }
+        throw Exception(errorMsg);
       }
     } catch (e) {
-      debugPrint('Error: $e');
-      if (!mounted) return; // ← cek mounted setelah await
+      if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Gagal: ${e.toString()}'), backgroundColor: Colors.red),
       );
     }
   }
@@ -157,177 +140,95 @@ class _DataDiriPageState extends State<DataDiriPage> {
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
         title: const Text('Data Diri'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildField('Nama Lengkap :', _namaController),
-            _buildField('Nomor KTP :', _ktpController,
-                keyboardType: TextInputType.number),
-            _buildDropdown(
-              label: 'Agama :',
-              value: _selectedAgama,
-              hint: '',
-              items: _agamaOptions,
-              onChanged: (v) => setState(() => _selectedAgama = v),
-            ),
-            const SizedBox(height: 12),
-            _buildDropdown(
-              label: 'Jenis Kelamin :',
-              value: _selectedJenisKelamin,
-              hint: '',
-              items: _jenisKelaminOptions,
-              onChanged: (v) => setState(() => _selectedJenisKelamin = v),
-            ),
-            const SizedBox(height: 12),
-            _buildField('Tempat Lahir :', _tempatLahirController),
-            _buildLabel('Tanggal Lahir :'),
-            const SizedBox(height: 4),
-            _buildDateField(_tanggalLahirController),
-            const SizedBox(height: 12),
-            _buildDropdown(
-              label: 'Status Pernikahan :',
-              value: _selectedStatusPernikahan,
-              hint: '',
-              items: _statusPernikahanOptions,
-              onChanged: (v) =>
-                  setState(() => _selectedStatusPernikahan = v),
-            ),
-            const SizedBox(height: 12),
-            _buildField(
-                'Nomor Pencari Kerja (AK 1) :', _nomorAK1Controller),
-            _buildDropdown(
-              label: 'Pendidikan Terakhir :',
-              value: _selectedPendidikan,
-              hint: '',
-              items: _pendidikanOptions,
-              onChanged: (v) => setState(() => _selectedPendidikan = v),
-            ),
-            const SizedBox(height: 12),
-            _buildField('Jurusan :', _jurusanController),
-            _buildField(
-                'Asal Sekolah/Universitas :', _asalSekolahController),
-            _buildDropdown(
-              label: 'Lokasi Kerja yang Diharapkan :',
-              value: _selectedLokasiKerja,
-              hint: '',
-              items: _lokasiKerjaOptions,
-              onChanged: (v) => setState(() => _selectedLokasiKerja = v),
-            ),
-            const SizedBox(height: 24),
-
-            // ← Tombol Simpan sudah terhubung ke _simpan()
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _simpan,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildField('Nama Lengkap :', _namaController),
+                _buildField('Nomor KTP :', _ktpController, keyboardType: TextInputType.number),
+                _buildDropdown(
+                  label: 'Agama :',
+                  value: _selectedAgama,
+                  items: _agamaOptions,
+                  onChanged: (v) => setState(() => _selectedAgama = v),
+                ),
+                const SizedBox(height: 12),
+                _buildDropdown(
+                  label: 'Jenis Kelamin :',
+                  value: _selectedJenisKelamin,
+                  items: _jenisKelaminOptions,
+                  onChanged: (v) => setState(() => _selectedJenisKelamin = v),
+                ),
+                const SizedBox(height: 12),
+                _buildField('Tempat Lahir :', _tempatLahirController),
+                _buildLabel('Tanggal Lahir :'),
+                const SizedBox(height: 4),
+                _buildDateField(_tanggalLahirController),
+                const SizedBox(height: 12),
+                _buildDropdown(
+                  label: 'Status Pernikahan :',
+                  value: _selectedStatusPernikahan,
+                  items: _statusPernikahanOptions,
+                  onChanged: (v) => setState(() => _selectedStatusPernikahan = v),
+                ),
+                const SizedBox(height: 12),
+                _buildField('Nomor Pencari Kerja (AK 1) :', _nomorAK1Controller),
+                _buildDropdown(
+                  label: 'Pendidikan Terakhir :',
+                  value: _selectedPendidikan,
+                  items: _pendidikanOptions,
+                  onChanged: (v) => setState(() => _selectedPendidikan = v),
+                ),
+                const SizedBox(height: 12),
+                _buildField('Jurusan :', _jurusanController),
+                _buildField('Asal Sekolah/Universitas :', _asalSekolahController),
+                _buildDropdown(
+                  label: 'Lokasi Kerja yang Diharapkan :',
+                  value: _selectedLokasiKerja,
+                  items: _lokasiKerjaOptions,
+                  onChanged: (v) => setState(() => _selectedLokasiKerja = v),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _simpan,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('SIMPAN', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'SIMPAN',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-              ),
+                const SizedBox(height: 20),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDateField(TextEditingController controller) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: TextField(
-        controller: controller,
-        readOnly: true,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.calendar_today_outlined,
-                color: Colors.grey, size: 20),
-            onPressed: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: DateTime(2000),
-                firstDate: DateTime(1950),
-                lastDate: DateTime.now(),
-                builder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.light(
-                        primary: Color.fromRGBO(29, 93, 155, 1),
-                      ),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (picked != null) {
-                controller.text =
-                    '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-              }
-            },
           ),
-        ),
-      ),
     );
   }
 
-  Widget _buildLabel(String label) {
-    return Text(label,
-        style:
-            const TextStyle(fontSize: 13, fontWeight: FontWeight.w500));
-  }
+  // --- Widget Helpers (Tetap Sama) ---
+  Widget _buildLabel(String label) => Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500));
 
-  Widget _buildField(
-    String label,
-    TextEditingController controller, {
-    TextInputType keyboardType = TextInputType.text,
-  }) {
+  Widget _buildField(String label, TextEditingController controller, {TextInputType keyboardType = TextInputType.text}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
         const SizedBox(height: 4),
         Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
             style: const TextStyle(fontSize: 13),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
+            decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
           ),
         ),
         const SizedBox(height: 12),
@@ -335,13 +236,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
     );
   }
 
-  Widget _buildDropdown({
-    required String label,
-    required String? value,
-    required String hint,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
+  Widget _buildDropdown({required String label, required String? value, required List<String> items, required ValueChanged<String?> onChanged}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -349,33 +244,46 @@ class _DataDiriPageState extends State<DataDiriPage> {
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
               value: value,
-              hint: Text(hint,
-                  style: const TextStyle(
-                      fontSize: 13, color: Colors.grey)),
-              icon: const Icon(Icons.keyboard_arrow_down,
-                  color: Colors.grey),
-              style: const TextStyle(
-                  fontSize: 13, color: Colors.black87),
-              items: items.map((item) {
-                return DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(item),
-                );
-              }).toList(),
+              items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
               onChanged: onChanged,
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDateField(TextEditingController controller) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+      child: TextField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.calendar_today, size: 20),
+            onPressed: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime(2000),
+                firstDate: DateTime(1950),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) {
+                setState(() => controller.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}");
+              }
+            },
+          ),
+        ),
+      ),
     );
   }
 }

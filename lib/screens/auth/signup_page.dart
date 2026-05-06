@@ -11,11 +11,24 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _ktpController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmVisible = false;
-  bool _isLoading = false; // ← tambahkan
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _ktpController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,42 +44,45 @@ class _SignupPageState extends State<SignupPage> {
               Image.asset('assets/images/signup_logo.png', width: 150),
               const SizedBox(height: 30),
 
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _buildLabel('Nama'),
-              ),
-              _buildTextField(_nameController, 'Masukkan nama lengkap',
-                  Icons.person_outline),
-              const SizedBox(height: 16),
-
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _buildLabel('Email'),
-              ),
+              _buildLabelLeft('Nama'),
               _buildTextField(
-                  _emailController, 'your@email.com', Icons.email_outlined),
+                  _nameController, 'Masukkan nama lengkap', Icons.person_outline),
               const SizedBox(height: 16),
 
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _buildLabel('Password'),
-              ),
-              _buildPasswordField(_passwordController, _isPasswordVisible, () {
-                setState(() => _isPasswordVisible = !_isPasswordVisible);
-              }),
+              _buildLabelLeft('Email'),
+              _buildTextField(
+                  _emailController, 'your@email.com', Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 16),
 
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _buildLabel('Konfirmasi Password'),
+              _buildLabelLeft('Nomor KTP'),
+              _buildTextField(
+                  _ktpController, 'Masukkan nomor KTP', Icons.badge_outlined,
+                  keyboardType: TextInputType.number),
+              const SizedBox(height: 16),
+
+              _buildLabelLeft('No. Telepon'),
+              _buildTextField(
+                  _phoneController, '08xxxxxxxxxx', Icons.phone_outlined,
+                  keyboardType: TextInputType.phone),
+              const SizedBox(height: 16),
+
+              _buildLabelLeft('Password'),
+              _buildPasswordField(
+                _passwordController,
+                _isPasswordVisible,
+                () => setState(() => _isPasswordVisible = !_isPasswordVisible),
               ),
-              _buildPasswordField(_confirmPasswordController, _isConfirmVisible,
-                  () {
-                setState(() => _isConfirmVisible = !_isConfirmVisible);
-              }),
+              const SizedBox(height: 16),
+
+              _buildLabelLeft('Konfirmasi Password'),
+              _buildPasswordField(
+                _confirmPasswordController,
+                _isConfirmVisible,
+                () => setState(() => _isConfirmVisible = !_isConfirmVisible),
+              ),
               const SizedBox(height: 24),
 
-              // ── Tombol Registrasi ──────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -108,11 +124,11 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  // ── Fungsi Register ──────────────────────────────────
   Future<void> _register() async {
-    // Validasi field kosong
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
+        _ktpController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -124,7 +140,6 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    // Validasi password cocok
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -135,7 +150,6 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    // Validasi panjang password
     if (_passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -152,8 +166,11 @@ class _SignupPageState extends State<SignupPage> {
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text,
+      _ktpController.text.trim(),
+      _phoneController.text.trim(),
     );
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (result['success'] == true) {
@@ -167,24 +184,33 @@ class _SignupPageState extends State<SignupPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? 'Registrasi gagal'),
+          content: Text(result['message']?.toString() ?? 'Registrasi gagal'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+  Widget _buildLabelLeft(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(text,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+      ),
     );
   }
 
   Widget _buildTextField(
-      TextEditingController controller, String hint, IconData icon) {
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return TextField(
       controller: controller,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
