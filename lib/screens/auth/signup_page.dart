@@ -163,11 +163,11 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => _isLoading = true);
 
     final result = await AuthService.register(
-      _nameController.text.trim(),
-      _emailController.text.trim(),
-      _passwordController.text,
-      _ktpController.text.trim(),
-      _phoneController.text.trim(),
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      ktp: _ktpController.text.trim(),
+      phone: _phoneController.text.trim(),
     );
 
     if (!mounted) return;

@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:recruitment_mobile/services/personal_service.dart';
 
 class DataPeminatanPage extends StatefulWidget {
   const DataPeminatanPage({super.key});
@@ -12,22 +15,79 @@ class _DataPeminatanPageState extends State<DataPeminatanPage> {
   final _ekspektasiGajiController = TextEditingController();
 
   String? _selectedKategori;
-  String? _selectedKategoriLainnya;
   String? _selectedPosisi;
-  String? _selectedPosisiLainnya;
 
-  final List<String> _kategoriOptions = [
-    'Produksi', 'Administrasi', 'Teknik', 'Keuangan', 'HRD', 'Lainnya'
-  ];
-  final List<String> _kategoriLainnyaOptions = [
-    'Marketing', 'IT', 'Legal', 'Logistik', 'Lainnya'
-  ];
-  final List<String> _posisiOptions = [
-    'Staff', 'Supervisor', 'Manager', 'Operator', 'Teknisi', 'Lainnya'
-  ];
-  final List<String> _posisiLainnyaOptions = [
-    'Analis', 'Koordinator', 'Kepala Bagian', 'Lainnya'
-  ];
+  bool _isLoading = false;
+
+  // Di dalam _DataPeminatanPageState, tambahkan mapping ini:
+  final Map<String, int> _kategoriMap = {
+    'Umum': 1,
+    'Engineering': 2,
+    'Penerjemah': 3,
+  };
+
+  final Map<String, int> _posisiMap = {
+    'Helper Kantin': 1,
+    'Operator DT': 2,
+    'Driver Dutro': 3,
+  };
+
+  // Update list pilihan agar sinkron dengan Map
+  final List<String> _kategoriOptions = ['Umum', 'Engineering', 'Penerjemah'];
+  final List<String> _posisiOptions = ['Helper Kantin', 'Operator DT', 'Driver Dutro'];
+
+  Future<void> _simpan() async {
+    if (_selectedKategori == null || _selectedPosisi == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih kategori dan posisi terlebih dahulu')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString('user_data');
+      if (userJson == null) throw Exception("Sesi berakhir");
+
+      final userData = jsonDecode(userJson);
+      
+      // Ambil personal_id dan pastikan jadi int
+      final int personalId = int.tryParse(userData['personal_id']?.toString() ?? '0') ?? 0;
+
+      if (personalId == 0) {
+        throw Exception("ID Personal tidak ditemukan. Silakan login ulang.");
+      }
+
+      final Map<String, dynamic> payload = {
+        "user_id": userData['id'], 
+        // Kirim ID (int) bukan teks agar tidak error SQL
+        "kategori": _kategoriMap[_selectedKategori],
+        "posisi_yang_dilamar": _posisiMap[_selectedPosisi],
+        "current_salary": double.tryParse(_gajiSaatIniController.text.replaceAll('.', '')) ?? 0,
+        "expected_salary": double.tryParse(_ekspektasiGajiController.text.replaceAll('.', '')) ?? 0,
+      };
+
+      // Kirim personalId sebagai int ke service
+      final result = await PersonalService.updatePersonal(personalId, payload);
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data Berhasil Disimpan'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context);
+      } else {
+        throw Exception(result['message']);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,82 +97,59 @@ class _DataPeminatanPageState extends State<DataPeminatanPage> {
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
         title: const Text('Data Peminatan'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDropdown(
-              label: 'Kategori :',
-              value: _selectedKategori,
-              items: _kategoriOptions,
-              onChanged: (v) => setState(() => _selectedKategori = v),
-            ),
-            const SizedBox(height: 12),
-
-            _buildDropdown(
-              label: 'Kategori Lainnya :',
-              value: _selectedKategoriLainnya,
-              items: _kategoriLainnyaOptions,
-              onChanged: (v) =>
-                  setState(() => _selectedKategoriLainnya = v),
-            ),
-            const SizedBox(height: 12),
-
-            _buildDropdown(
-              label: 'Posisi Yang Dilamar :',
-              value: _selectedPosisi,
-              items: _posisiOptions,
-              onChanged: (v) => setState(() => _selectedPosisi = v),
-            ),
-            const SizedBox(height: 12),
-
-            _buildDropdown(
-              label: 'Posisi Yang Dilamar Lainnya :',
-              value: _selectedPosisiLainnya,
-              items: _posisiLainnyaOptions,
-              onChanged: (v) =>
-                  setState(() => _selectedPosisiLainnya = v),
-            ),
-            const SizedBox(height: 12),
-
-            _buildField('Gaji Saat Ini :', _gajiSaatIniController,
-                keyboardType: TextInputType.number),
-            _buildField('Ekspektasi Gaji :', _ekspektasiGajiController,
-                keyboardType: TextInputType.number),
-
-            const SizedBox(height: 12),
-
-            // Tombol Simpan
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDropdown(
+                  label: 'Kategori :',
+                  value: _selectedKategori,
+                  items: _kategoriOptions,
+                  onChanged: (v) => setState(() => _selectedKategori = v),
+                ),
+                const SizedBox(height: 4),
+                _buildDropdown(
+                  label: 'Posisi Yang Dilamar :',
+                  value: _selectedPosisi,
+                  items: _posisiOptions,
+                  onChanged: (v) => setState(() => _selectedPosisi = v),
+                ),
+                const SizedBox(height: 4),
+                _buildField('Gaji Saat Ini :', _gajiSaatIniController, keyboardType: TextInputType.number),
+                const SizedBox(height: 4),
+                _buildField('Ekspektasi Gaji :', _ekspektasiGajiController, keyboardType: TextInputType.number),
+                const SizedBox(height: 16),
+                Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _simpan,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                      ),
+                      child: const Text(
+                        'SIMPAN',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
-                ),
-                child: const Text(
-                  'SIMPAN',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold),
-                ),
-              ),
+                
+                const SizedBox(height: 20),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -131,7 +168,7 @@ class _DataPeminatanPageState extends State<DataPeminatanPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(label),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,

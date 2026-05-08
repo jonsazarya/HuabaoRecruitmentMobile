@@ -1,56 +1,74 @@
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import '../config/env.dart';
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  static const String baseUrl = 'http://10.24.172.60:8000/api';
-
-  // ── Status User ──────────────────────────────────────
-  static User? getCurrentUser() => _auth.currentUser;
-  static bool isLoggedIn() => _auth.currentUser != null;
-
-  // ── Login Email ──────────────────────────────────────
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  // ── Login Email 
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
 
-      final firebaseToken = await credential.user?.getIdToken();
-      if (firebaseToken == null) return {'success': false, 'message': 'Token gagal'};
+      final firebaseToken = await credential.user?.getIdToken(true);
 
-      final backendResponse = await sendTokenToBackend(firebaseToken);
-      if (backendResponse['success'] != true) return backendResponse;
+      debugPrint('=== FIREBASE TOKEN ===');
+      debugPrint(firebaseToken);
+      debugPrint('TOKEN LENGTH: ${firebaseToken?.length}');
+      debugPrint('======================');
 
-      // UPDATE: Kirim backendResponse['user'] ke fungsi save
-      await _saveUserData(
-        firebaseToken: firebaseToken,
-        backendToken: backendResponse['token'] ?? '',
-        userFromBackend: backendResponse['user'], 
-        uid: credential.user?.uid ?? '',
+      if (firebaseToken == null) {
+        return {'success': false, 'message': 'Firebase token gagal'};
+      }
+
+      // Langsung hit API tanpa ApiService agar response tidak dibungkus
+      final response = await _postDirect(
+        '${Env.baseUrl}/auth/firebase-login',
+        {
+          'firebase_uid': credential.user?.uid,
+          'email': credential.user?.email,
+        },
       );
 
-      return {'success': true};
+      debugPrint('Firebase Login Response: $response');
+
+      if (response['success'] == true) {
+        await _saveUserData(
+          firebaseToken: firebaseToken,
+          backendToken: response['token'] ?? '',
+          userData: response['user'],
+          uid: credential.user?.uid ?? '',
+        );
+      }
+
+      return response;
+    } on FirebaseAuthException catch (e) {
+      return {'success': false, 'message': _firebaseError(e.code)};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }
   }
 
-  // ── Register ─────────────────────────────────────────
-  static Future<Map<String, dynamic>> register(
-      String name,
-      String email,
-      String password,
-      String ktp,
-      String phone) async {
+  // ── Register 
+  static Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    required String ktp,
+    required String phone,
+  }) async {
     try {
-      // 1. Register ke Firebase
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -58,14 +76,9 @@ class AuthService {
       await credential.user?.updateDisplayName(name);
       final firebaseToken = await credential.user?.getIdToken();
 
-      // 2. Register ke Laravel
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
+      final response = await _postDirect(
+        '${Env.baseUrl}/auth/register',
+        {
           'name': name,
           'email': email,
           'password': password,
@@ -73,26 +86,29 @@ class AuthService {
           'ktp': ktp,
           'phone': phone,
           'firebase_token': firebaseToken,
-        }),
+        },
       );
 
-      final result = jsonDecode(response.body);
+      debugPrint('Register Response: $response');
 
-      if (result['success'] == true) {
+      if (response['success'] == true) {
         await _saveUserData(
           firebaseToken: firebaseToken ?? '',
-          backendToken: result['token'] ?? '',
-          userFromBackend: result['user'],
+          backendToken: response['token'] ?? '',
+          userData: response['user'] ?? response['data'],
           uid: credential.user?.uid ?? '',
         );
       }
-      return result;
+
+      return response;
+    } on FirebaseAuthException catch (e) {
+      return {'success': false, 'message': _firebaseError(e.code)};
     } catch (e) {
-      return {'success': false, 'message': 'Google Sign-In gagal: $e'};
+      return {'success': false, 'message': 'Register gagal: $e'};
     }
   }
 
-  // ── Google Sign In ────────────────────────────────────
+  // ── Google Login 
   static Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
       final googleUser = await _googleSignIn.signIn();
@@ -110,132 +126,127 @@ class AuthService {
       final firebaseToken = await userCredential.user?.getIdToken();
 
       if (firebaseToken == null) {
-        return {'success': false, 'message': 'Token Firebase gagal dibuat'};
+        return {'success': false, 'message': 'Firebase token gagal'};
       }
 
-      final backendResponse = await sendTokenToBackend(firebaseToken);
-      if (backendResponse['success'] == true) {
+      final response = await _postDirect(
+        '${Env.baseUrl}/auth/firebase-login',
+        {'idToken': firebaseToken},
+      );
+
+      debugPrint('Google Login Response: $response');
+
+      if (response['success'] == true) {
         await _saveUserData(
           firebaseToken: firebaseToken,
-          backendToken: backendResponse['token'] ?? '',
-          userFromBackend: backendResponse['user'],
+          backendToken: response['token'] ?? '',
+          userData: response['user'],
           uid: userCredential.user?.uid ?? '',
         );
-        return {'success': true};
       }
-      return {'success': false, 'message': 'Backend login gagal'};
-      } catch (e) {
-      return {'success': false, 'message': 'Google Sign-In gagal: $e'};
+
+      return response;
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
   }
 
-  // ── Logout ────────────────────────────────────────────
+  // ── Logout 
   static Future<void> logout() async {
-    await _googleSignIn.signOut();
     await _auth.signOut();
+    await _googleSignIn.signOut();
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
 
-  // ── Forgot Password ───────────────────────────────────
-  static Future<Map<String, dynamic>> forgotPassword(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
-      return {'success': true};
-    } catch (e) {
-      return {'success': false, 'message': e.toString()};
-    }
-  }
-
-  // ── Send Firebase Token ke Backend ───────────────────
-  static Future<Map<String, dynamic>> sendTokenToBackend(
-      String firebaseToken) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/firebase-login'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({'idToken': firebaseToken}),
-      );
-
-      print('STATUS: ${response.statusCode}');
-      print('BODY: ${response.body}');
-
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200) {
-        return data;
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Server error'
-        };
-      }
-    } catch (e) {
-      print('ERROR sendTokenToBackend: $e');
-      return {'success': false, 'message': e.toString()};
-    }
-  }
-
-  // ── Get Backend Token ─────────────────────────────────
+  // ── Get Backend Token 
   static Future<String?> getBackendToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('backend_token');
   }
 
-  // ── Get User Data ─────────────────────────────────────
-  static Future<Map<String, String>> getUserData() async {
+  // ── Get User Data 
+  static Future<Map<String, dynamic>> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    return {
-      'name': prefs.getString('name') ?? '',
-      'email': prefs.getString('email') ?? '',
-      'photo_url': prefs.getString('photo_url') ?? '',
-      'uid': prefs.getString('uid') ?? '',
-    };
+    final userDataString = prefs.getString('user_data') ?? '{}';
+    try {
+      return jsonDecode(userDataString);
+    } catch (e) {
+      return {};
+    }
   }
 
-  // ── Save User Data ────────────────────────────────────
+  // ── Save User Data 
   static Future<void> _saveUserData({
     required String firebaseToken,
     required String backendToken,
-    required dynamic userFromBackend,
+    required dynamic userData,
     required String uid,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     await prefs.setString('firebase_token', firebaseToken);
     await prefs.setString('backend_token', backendToken);
     await prefs.setString('uid', uid);
 
-    if (userFromBackend != null) {
-      await prefs.setString('user_data', jsonEncode(userFromBackend));
-      await prefs.setString('name', userFromBackend['name'] ?? '');
-      await prefs.setString('email', userFromBackend['email'] ?? '');
-    } else {
-      await prefs.setString('user_data', '{}'); 
+    if (userData != null) {
+      await prefs.setString('user_data', jsonEncode(userData));
+      await prefs.setString('user_id', userData['id']?.toString() ?? '');
+      await prefs.setString('name', userData['name']?.toString() ?? '');
+      await prefs.setString('email', userData['email']?.toString() ?? '');
+    }
+
+    // Verifikasi tersimpan
+    debugPrint('=== SAVED USER DATA ===');
+    debugPrint('backend_token: $backendToken');
+    debugPrint('user_id: ${userData?['id']}');
+    debugPrint('name: ${userData?['name']}');
+    debugPrint('=======================');
+  }
+
+  // Post langsung tanpa ApiService wrapper
+  // Digunakan untuk auth agar response tidak dibungkus
+  static Future<Map<String, dynamic>> _postDirect(
+    String url,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
+
+      debugPrint('URL: $url');
+      debugPrint('STATUS: ${response.statusCode}');
+      debugPrint('BODY: ${response.body}');
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
   }
 
-  // ── Error Messages ────────────────────────────────────
-  static String _getErrorMessage(String code) {
+  // ── Firebase Error Messages ───────────────────────────
+  static String _firebaseError(String code) {
     switch (code) {
       case 'user-not-found':
-        return 'Email tidak terdaftar';
+        return 'User tidak ditemukan';
       case 'wrong-password':
         return 'Password salah';
       case 'invalid-credential':
         return 'Email atau password salah';
+      case 'invalid-email':
+        return 'Email tidak valid';
       case 'email-already-in-use':
         return 'Email sudah digunakan';
       case 'weak-password':
-        return 'Password terlalu lemah (minimal 6 karakter)';
-      case 'invalid-email':
-        return 'Format email tidak valid';
-      case 'user-disabled':
-        return 'Akun dinonaktifkan';
+        return 'Password terlalu lemah';
       case 'too-many-requests':
-        return 'Terlalu banyak percobaan, coba lagi nanti';
+        return 'Terlalu banyak percobaan';
       default:
         return 'Terjadi kesalahan';
     }
