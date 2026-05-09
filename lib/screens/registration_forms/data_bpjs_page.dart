@@ -16,6 +16,15 @@ class _DataBpjsPageState extends State<DataBpjsPage> {
   final _statusBpjsController = TextEditingController();
   final _catatanBpjsController = TextEditingController();
 
+  @override
+  void dispose() {
+    _nomorBpjsKesehatan.dispose();
+    _nomorBpjsKetenagakerjaan.dispose();
+    _statusBpjsController.dispose();
+    _catatanBpjsController.dispose();
+    super.dispose();
+  }
+
   bool _isLoading = false;
 
   Future<void> _simpan() async {

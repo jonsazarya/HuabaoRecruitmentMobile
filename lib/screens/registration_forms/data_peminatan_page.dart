@@ -14,12 +14,18 @@ class _DataPeminatanPageState extends State<DataPeminatanPage> {
   final _gajiSaatIniController = TextEditingController();
   final _ekspektasiGajiController = TextEditingController();
 
+  @override
+  void dispose() {
+    _gajiSaatIniController.dispose();
+    _ekspektasiGajiController.dispose();
+    super.dispose();
+  }
+
   String? _selectedKategori;
   String? _selectedPosisi;
 
   bool _isLoading = false;
 
-  // Di dalam _DataPeminatanPageState, tambahkan mapping ini:
   final Map<String, int> _kategoriMap = {
     'Umum': 1,
     'Engineering': 2,
@@ -32,7 +38,6 @@ class _DataPeminatanPageState extends State<DataPeminatanPage> {
     'Driver Dutro': 3,
   };
 
-  // Update list pilihan agar sinkron dengan Map
   final List<String> _kategoriOptions = ['Umum', 'Engineering', 'Penerjemah'];
   final List<String> _posisiOptions = ['Helper Kantin', 'Operator DT', 'Driver Dutro'];
 

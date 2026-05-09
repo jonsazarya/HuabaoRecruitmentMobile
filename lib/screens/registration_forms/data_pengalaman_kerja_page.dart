@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:recruitment_mobile/services/work_experience_service.dart';
 
 class DataPengalamanKerjaPage extends StatefulWidget {
   const DataPengalamanKerjaPage({super.key});
@@ -8,8 +11,7 @@ class DataPengalamanKerjaPage extends StatefulWidget {
       _DataPengalamanKerjaPageState();
 }
 
-class _DataPengalamanKerjaPageState
-    extends State<DataPengalamanKerjaPage> {
+class _DataPengalamanKerjaPageState extends State<DataPengalamanKerjaPage> {
   final _namaPerusahaanController = TextEditingController();
   final _posisiController = TextEditingController();
   final _jobDeskController = TextEditingController();
@@ -18,6 +20,66 @@ class _DataPengalamanKerjaPageState
 
   bool _punyaPengalaman = true;
   bool _masihBekerja = false;
+  bool _isLoading = false;
+
+  Future<void> _simpan() async {
+    if (!_punyaPengalaman) {
+      Navigator.pop(context);
+      return;
+    }
+
+    if (_namaPerusahaanController.text.isEmpty ||
+        _mulaiController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nama perusahaan dan tanggal mulai wajib diisi'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString('user_data');
+      final userData = jsonDecode(userJson!);
+      final int userId = userData['id'];
+
+      final Map<String, dynamic> payload = {
+        "user_id": userId,
+        "perusahaan": _namaPerusahaanController.text,
+        "jabatan": _posisiController.text,
+        "job_desk": _jobDeskController.text,
+        "start_date": _mulaiController.text,
+        "end_date": _masihBekerja ? null : _selesaiController.text,
+        "until_now": _masihBekerja ? 1 : 0,
+      };
+
+      final result = await WorkExperienceService.createWorkExperience(payload);
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pengalaman kerja berhasil disimpan'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        throw Exception(result['message'] ?? 'Gagal menyimpan data');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,148 +89,120 @@ class _DataPengalamanKerjaPageState
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
         title: const Text('Data Pengalaman Kerja'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Radio Ya/Tidak
-            const Text(
-              'Apakah Anda memiliki pengalaman kerja?',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Radio<bool>(
-                  value: true,
-                  groupValue: _punyaPengalaman,
-                  activeColor: const Color.fromRGBO(29, 93, 155, 1),
-                  onChanged: (v) =>
-                      setState(() => _punyaPengalaman = v!),
-                ),
-                const Text('Ya', style: TextStyle(fontSize: 13)),
-                const SizedBox(width: 16),
-                Radio<bool>(
-                  value: false,
-                  groupValue: _punyaPengalaman,
-                  activeColor: const Color.fromRGBO(29, 93, 155, 1),
-                  onChanged: (v) =>
-                      setState(() => _punyaPengalaman = v!),
-                ),
-                const Text('Tidak', style: TextStyle(fontSize: 13)),
-              ],
-            ),
-
-            if (_punyaPengalaman) ...[
-              const SizedBox(height: 8),
-              _buildField('Nama Perusahaan :', _namaPerusahaanController),
-              _buildField('Posisi / Jabatan :', _posisiController),
-
-              // Job Desk - multiline
-              _buildLabel('Job Desk :'),
-              const SizedBox(height: 4),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: TextField(
-                  controller: _jobDeskController,
-                  maxLines: 3,
-                  style: const TextStyle(fontSize: 13),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Mulai & Selesai
-              Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  const Text(
+                    'Apakah Anda memiliki pengalaman kerja?',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Radio<bool>(
+                        value: true,
+                        groupValue: _punyaPengalaman,
+                        activeColor: const Color.fromRGBO(29, 93, 155, 1),
+                        onChanged: (v) => setState(() => _punyaPengalaman = v!),
+                      ),
+                      const Text('Ya', style: TextStyle(fontSize: 13)),
+                      const SizedBox(width: 16),
+                      Radio<bool>(
+                        value: false,
+                        groupValue: _punyaPengalaman,
+                        activeColor: const Color.fromRGBO(29, 93, 155, 1),
+                        onChanged: (v) => setState(() => _punyaPengalaman = v!),
+                      ),
+                      const Text('Tidak', style: TextStyle(fontSize: 13)),
+                    ],
+                  ),
+
+                  if (_punyaPengalaman) ...[
+                    const SizedBox(height: 8),
+                    _buildField('Nama Perusahaan :', _namaPerusahaanController),
+                    _buildField('Posisi / Jabatan :', _posisiController),
+                    _buildField('Job Desk :', _jobDeskController, maxLines: 3),
+
+                    Row(
                       children: [
-                        _buildLabel('Mulai :'),
-                        const SizedBox(height: 4),
-                        _buildDateField(_mulaiController),
+                        Expanded(
+                          child: _buildDateField('Mulai :', _mulaiController),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildDateField(
+                            'Selesai :',
+                            _selesaiController,
+                            disabled: _masihBekerja,
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        _buildLabel('Selesai :'),
-                        const SizedBox(height: 4),
-                        _buildDateField(_selesaiController,
-                            disabled: _masihBekerja),
+                        SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: Checkbox(
+                            value: _masihBekerja,
+                            activeColor: const Color.fromRGBO(29, 93, 155, 1),
+                            onChanged: (v) =>
+                                setState(() => _masihBekerja = v!),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Masih bekerja',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
                       ],
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _simpan,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text(
+                        'SIMPAN',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-
-              // Checkbox masih bekerja
-              Row(
-                children: [
-                  Checkbox(
-                    value: _masihBekerja,
-                    activeColor: const Color.fromRGBO(29, 93, 155, 1),
-                    onChanged: (v) =>
-                        setState(() => _masihBekerja = v!),
-                  ),
-                  const Text('Masih bekerja',
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-            ],
-
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
-                ),
-                child: const Text('SIMPAN',
-                    style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold)),
-              ),
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildLabel(String label) {
-    return Text(label,
-        style: const TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w500));
+    return Text(
+      label,
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+    );
   }
 
-  Widget _buildField(String label, TextEditingController controller,
-      {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -182,12 +216,14 @@ class _DataPengalamanKerjaPageState
           ),
           child: TextField(
             controller: controller,
-            keyboardType: keyboardType,
+            maxLines: maxLines,
             style: const TextStyle(fontSize: 13),
             decoration: const InputDecoration(
               border: InputBorder.none,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
         ),
@@ -196,51 +232,64 @@ class _DataPengalamanKerjaPageState
     );
   }
 
-  Widget _buildDateField(TextEditingController controller,
-      {bool disabled = false}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: disabled ? Colors.grey.shade100 : Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: TextField(
-        controller: controller,
-        readOnly: true,
-        enabled: !disabled,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.calendar_today_outlined,
-                color: Colors.grey, size: 18),
-            onPressed: disabled
-                ? null
-                : () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime(2020),
-                      firstDate: DateTime(1990),
-                      lastDate: DateTime.now(),
-                      builder: (context, child) => Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: const ColorScheme.light(
-                            primary: Color.fromRGBO(29, 93, 155, 1),
-                          ),
-                        ),
-                        child: child!,
-                      ),
-                    );
-                    if (picked != null) {
-                      controller.text =
-                          '${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-                    }
-                  },
+  Widget _buildDateField(
+    String label,
+    TextEditingController controller, {
+    bool disabled = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 4),
+        Container(
+          decoration: BoxDecoration(
+            color: disabled ? Colors.grey.shade100 : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: TextField(
+            controller: controller,
+            readOnly: true,
+            enabled: !disabled,
+            style: const TextStyle(fontSize: 13),
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(1990),
+                lastDate: DateTime.now(),
+                builder: (context, child) => Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.light(
+                      primary: Color.fromRGBO(29, 93, 155, 1),
+                    ),
+                  ),
+                  child: child!,
+                ),
+              );
+              if (picked != null) {
+                setState(
+                  () => controller.text = picked.toString().split(' ')[0],
+                );
+              }
+            },
+            decoration: const InputDecoration(
+              suffixIcon: Icon(
+                Icons.calendar_today_outlined,
+                size: 18,
+                color: Colors.grey,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 }

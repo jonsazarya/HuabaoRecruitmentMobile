@@ -21,6 +21,18 @@ class _DataDiriPageState extends State<DataDiriPage> {
   final _jurusanController = TextEditingController();
   final _asalSekolahController = TextEditingController();
 
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _ktpController.dispose();
+    _tempatLahirController.dispose();
+    _tanggalLahirController.dispose();
+    _nomorAK1Controller.dispose();
+    _jurusanController.dispose();
+    _asalSekolahController.dispose();
+    super.dispose();
+  }
+
   String? _selectedAgama;
   String? _selectedJenisKelamin;
   String? _selectedStatusPernikahan;

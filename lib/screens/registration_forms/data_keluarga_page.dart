@@ -19,13 +19,29 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
   final _tempatLahirController = TextEditingController();
   final _tanggalLahirController = TextEditingController();
 
+  @override
+  void dispose() {
+    _noKKController.dispose();
+    _namaController.dispose();
+    _noKTPController.dispose();
+    _tempatLahirController.dispose();
+    _tanggalLahirController.dispose();
+    super.dispose();
+  }
+
   String? _selectedHubungan;
   String? _selectedJenisKelamin;
 
   bool _isLoading = false;
 
   final List<String> _hubunganOptions = [
-    'Ayah', 'Ibu', 'Suami', 'Istri', 'Anak', 'Saudara', 'Lainnya'
+    'Ayah', 
+    'Ibu', 
+    'Suami', 
+    'Istri', 
+    'Anak', 
+    'Saudara', 
+    'Lainnya'
   ];
 
   final List<String> _jenisKelaminOptions = [
