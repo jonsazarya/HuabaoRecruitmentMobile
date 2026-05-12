@@ -16,117 +16,161 @@ class SettingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          // ── HEADER ────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 30, 16, 16),
-            decoration: const BoxDecoration(
-              color: Color.fromRGBO(29, 93, 155, 1),
-            ),
-            child: Row(
-              children: [
-                Image.asset('assets/images/huabao-logo.png', width: 36),
-                const SizedBox(width: 10),
-                const Text(
-                  'Pengaturan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ── SECTION AKUN ──────────────────────────────────
-          _buildSectionTitle('Akun'),
-          _buildSettingItem(context, Icons.person_outline, 'Edit Profil',
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const EditProfilePage()))),
-          _buildSettingItem(context, Icons.lock_outline, 'Ubah Password',
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const ChangePasswordPage()))),
-          _buildSettingItem(context, Icons.email_outlined, 'Ubah Email',
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ChangeEmailPage()))),
-
-          const SizedBox(height: 8),
-
-          // ── SECTION APLIKASI ──────────────────────────────
-          _buildSectionTitle('Aplikasi'),
-          _buildSettingItem(context, Icons.notifications_outlined, 'Notifikasi',
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const NotificationPage()))),
-          _buildSettingItem(context, Icons.language_outlined, 'Bahasa',
-              trailing: 'Indonesia',
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const LanguagePage()))),
-
-          const SizedBox(height: 8),
-
-          // ── SECTION LAINNYA ───────────────────────────────
-          _buildSectionTitle('Lainnya'),
-          _buildSettingItem(context, Icons.info_outline, 'Tentang Aplikasi',
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const AboutAppPage()))),
-          _buildSettingItem(context, Icons.help_outline, 'Bantuan',
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const HelpPage()))),
-          _buildSettingItem(
-              context, Icons.privacy_tip_outlined, 'Kebijakan Privasi',
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const PrivacyPolicyPage()))),
-
-          const SizedBox(height: 16),
-
-          // ── TOMBOL LOGOUT ─────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
+    return Scaffold(
+        body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── HEADER ────────────────────────────────────────
+            Container(
               width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () => _showLogoutDialog(context),
-                icon: const Icon(Icons.logout),
-                label: const Text(
-                  'Keluar',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 16),
+              decoration: const BoxDecoration(
+                color: Color.fromRGBO(29, 93, 155, 1),
+              ),
+              child: Row(
+                children: [
+                  Image.asset('assets/images/huabao-logo.png', width: 42),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Pengaturan',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── SECTION AKUN ──────────────────────────────────
+            _buildSectionTitle('Akun'),
+            _buildSettingItem(
+              context,
+              Icons.person_outline,
+              'Edit Profil',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfilePage()),
+              ),
+            ),
+            _buildSettingItem(
+              context,
+              Icons.lock_outline,
+              'Ubah Password',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+              ),
+            ),
+            _buildSettingItem(
+              context,
+              Icons.email_outlined,
+              'Ubah Email',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChangeEmailPage()),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── SECTION APLIKASI ──────────────────────────────
+            _buildSectionTitle('Aplikasi'),
+            _buildSettingItem(
+              context,
+              Icons.notifications_outlined,
+              'Notifikasi',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
+              ),
+            ),
+            _buildSettingItem(
+              context,
+              Icons.language_outlined,
+              'Bahasa',
+              trailing: 'Indonesia',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LanguagePage()),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // ── SECTION LAINNYA ───────────────────────────────
+            _buildSectionTitle('Lainnya'),
+            _buildSettingItem(
+              context,
+              Icons.info_outline,
+              'Tentang Aplikasi',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutAppPage()),
+              ),
+            ),
+            _buildSettingItem(
+              context,
+              Icons.help_outline,
+              'Bantuan',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HelpPage()),
+              ),
+            ),
+            _buildSettingItem(
+              context,
+              Icons.privacy_tip_outlined,
+              'Kebijakan Privasi',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showLogoutDialog(context),
+                  icon: const Icon(Icons.logout),
+                  label: const Text(
+                    'Keluar',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 80),
-        ],
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }
 
-  // ── Dialog Konfirmasi Logout ───────────────────────────
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -199,13 +243,18 @@ class SettingPage extends StatelessWidget {
             color: const Color.fromRGBO(29, 93, 155, 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon,
-              color: const Color.fromRGBO(29, 93, 155, 1), size: 20),
+          child: Icon(
+            icon,
+            color: const Color.fromRGBO(29, 93, 155, 1),
+            size: 20,
+          ),
         ),
         title: Text(title, style: const TextStyle(fontSize: 14)),
         trailing: trailing != null
-            ? Text(trailing,
-                style: const TextStyle(color: Colors.grey, fontSize: 13))
+            ? Text(
+                trailing,
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              )
             : const Icon(Icons.chevron_right, color: Colors.grey),
         onTap: onTap,
       ),

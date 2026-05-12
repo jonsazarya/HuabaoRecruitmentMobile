@@ -13,7 +13,6 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
@@ -34,7 +33,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
                 blurRadius: 4,
-                offset: const Offset(0, 2),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
