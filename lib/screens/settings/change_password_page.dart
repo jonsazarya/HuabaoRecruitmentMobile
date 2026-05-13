@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:recruitment_mobile/services/auth_update_service.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -12,10 +13,54 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _konfirmasiController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isKonfirmasiVisible = false;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _konfirmasiController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _simpanPerubahan() async {
+    if (_passwordController.text.isEmpty ||
+        _konfirmasiController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field harus diisi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await AuthUpdateService.changePassword(
+      _passwordController.text,
+      _konfirmasiController.text,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result['message'] ?? ''),
+        backgroundColor:
+            result['success'] == true ? Colors.green : Colors.red,
+      ),
+    );
+
+    if (result['success'] == true) {
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
@@ -59,7 +104,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               const SizedBox(height: 16),
 
-              // Password Baru
               _buildPasswordField(
                 hint: 'Password Baru',
                 controller: _passwordController,
@@ -69,7 +113,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               const SizedBox(height: 10),
 
-              // Konfirmasi Password
               _buildPasswordField(
                 hint: 'Konfirmasi Password',
                 controller: _konfirmasiController,
@@ -79,11 +122,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               const SizedBox(height: 16),
 
-              // Tombol
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _isLoading ? null : _simpanPerubahan,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                     foregroundColor: Colors.white,
@@ -93,11 +135,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 10),
                   ),
-                  child: const Text(
-                    'SIMPAN PERUBAHAN',
-                    style:
-                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'SIMPAN PERUBAHAN',
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],
@@ -130,7 +181,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           suffixIcon: IconButton(
             icon: Icon(
-              isVisible ? Icons.visibility_off : Icons.visibility_off,
+              isVisible ? Icons.visibility : Icons.visibility_off,
               color: Colors.grey,
               size: 20,
             ),

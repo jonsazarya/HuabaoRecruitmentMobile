@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:recruitment_mobile/services/auth_update_service.dart';
 
 class ChangeEmailPage extends StatefulWidget {
   const ChangeEmailPage({super.key});
@@ -9,10 +11,55 @@ class ChangeEmailPage extends StatefulWidget {
 
 class _ChangeEmailPageState extends State<ChangeEmailPage> {
   final _emailController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _simpanPerubahan() async {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email tidak boleh kosong'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await AuthUpdateService.changeEmail(
+      _emailController.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result['message'] ?? ''),
+        backgroundColor:
+            result['success'] == true ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+
+    if (result['success'] == true) {
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final currentEmail =
+        FirebaseAuth.instance.currentUser?.email ?? '';
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
@@ -50,13 +97,17 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                 ),
               ),
               const SizedBox(height: 4),
+              Text(
+                'Email saat ini: $currentEmail',
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+              const SizedBox(height: 4),
               const Text(
-                'Pastikan email baru aktif.',
+                'Email verifikasi akan dikirim ke email baru.',
                 style: TextStyle(fontSize: 11, color: Colors.grey),
               ),
               const SizedBox(height: 16),
 
-              // Input Email
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade300),
@@ -68,8 +119,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                   style: const TextStyle(fontSize: 13),
                   decoration: const InputDecoration(
                     hintText: 'Masukkan Email Baru',
-                    hintStyle:
-                        TextStyle(fontSize: 13, color: Colors.grey),
+                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
                         horizontal: 12, vertical: 12),
@@ -78,11 +128,10 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
               ),
               const SizedBox(height: 16),
 
-              // Tombol
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _isLoading ? null : _simpanPerubahan,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                     foregroundColor: Colors.white,
@@ -92,11 +141,20 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 10),
                   ),
-                  child: const Text(
-                    'SIMPAN PERUBAHAN',
-                    style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'SIMPAN PERUBAHAN',
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],
