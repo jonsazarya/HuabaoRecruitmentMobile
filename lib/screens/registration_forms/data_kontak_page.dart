@@ -44,6 +44,24 @@ class _DataKontakPageState extends State<DataKontakPage> {
   }
 
   Future<void> _simpan() async {
+    if (_waController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty ||
+        _facebookController.text.trim().isEmpty ||
+        _linkedinController.text.trim().isEmpty ||
+        _namaKontakDaruratController.text.trim().isEmpty ||
+        _selectedHubungan == null ||
+        _noHpDaruratController.text.trim().isEmpty) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field wajib diisi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -101,11 +119,13 @@ class _DataKontakPageState extends State<DataKontakPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
-        title: const Text('Data Kontak'),
+        title: const Text('Data Kontak', style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -167,24 +187,26 @@ class _DataKontakPageState extends State<DataKontakPage> {
                   ),
 
                   const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerRight,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: _simpan,
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+
                       child: const Text(
                         'SIMPAN',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

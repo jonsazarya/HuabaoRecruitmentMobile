@@ -35,10 +35,19 @@ class _DataKursusPageState extends State<DataKursusPage> {
   ];
 
   Future<void> _simpan() async {
-    if (_selectedKategori == null || _judulController.text.isEmpty) {
+    if (_selectedKategori == null ||
+        _judulController.text.trim().isEmpty ||
+        _penyelenggaraController.text.trim().isEmpty ||
+        _durasiController.text.trim().isEmpty ||
+        _tahunController.text.trim().isEmpty) {
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kategori dan Judul wajib diisi')),
+        const SnackBar(
+          content: Text('Semua field wajib diisi'),
+          backgroundColor: Colors.orange,
+        ),
       );
+
       return;
     }
 
@@ -85,11 +94,13 @@ class _DataKursusPageState extends State<DataKursusPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
-        title: const Text('Data Kursus / Pelatihan / Sertifikasi'),
+        title: const Text('Data Kursus / Pelatihan / Sertifikasi', style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -120,22 +131,27 @@ class _DataKursusPageState extends State<DataKursusPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: _simpan,
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
                       ),
-                      child: const Text('SIMPAN',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold)),
+
+                      child: const Text(
+                        'SIMPAN',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

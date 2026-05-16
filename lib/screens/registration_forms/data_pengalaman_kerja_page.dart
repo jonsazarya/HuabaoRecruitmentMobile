@@ -28,13 +28,20 @@ class _DataPengalamanKerjaPageState extends State<DataPengalamanKerjaPage> {
       return;
     }
 
-    if (_namaPerusahaanController.text.isEmpty ||
-        _mulaiController.text.isEmpty) {
+    if (_namaPerusahaanController.text.trim().isEmpty ||
+        _posisiController.text.trim().isEmpty ||
+        _jobDeskController.text.trim().isEmpty ||
+        _mulaiController.text.trim().isEmpty ||
+        (!_masihBekerja &&
+            _selesaiController.text.trim().isEmpty)) {
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Nama perusahaan dan tanggal mulai wajib diisi'),
+          content: Text('Semua field wajib diisi'),
+          backgroundColor: Colors.orange,
         ),
       );
+
       return;
     }
 
@@ -84,11 +91,13 @@ class _DataPengalamanKerjaPageState extends State<DataPengalamanKerjaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
-        title: const Text('Data Pengalaman Kerja'),
+        title: const Text('Data Pengalaman Kerja', style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -164,24 +173,26 @@ class _DataPengalamanKerjaPageState extends State<DataPengalamanKerjaPage> {
                     ),
                   ],
                   const SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.centerRight,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: _simpan,
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+
                       child: const Text(
                         'SIMPAN',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

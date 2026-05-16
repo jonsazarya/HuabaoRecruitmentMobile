@@ -48,15 +48,50 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
   }
 
   Future<void> _simpan() async {
+    if (_selProvKtp == null ||
+        _selKabKtp == null ||
+        _selKecKtp == null ||
+        _selDesaKtp == null ||
+        _rtRwKtp.text.trim().isEmpty ||
+        _kodePosKtp.text.trim().isEmpty ||
+        _alamatKtp.text.trim().isEmpty ||
+
+        _selProvDom == null ||
+        _selKabDom == null ||
+        _selKecDom == null ||
+        _selDesaDom == null ||
+        _rtRwDom.text.trim().isEmpty ||
+        _kodePosDom.text.trim().isEmpty ||
+        _alamatDom.text.trim().isEmpty) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field alamat wajib diisi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      return;
+    }
+
     setState(() => _isLoading = true);
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString('user_data');
-      final userData = jsonDecode(userJson!);
+
+      if (userJson == null) {
+        throw Exception("User tidak ditemukan. Silakan login kembali.");
+      }
+
+      final userData = jsonDecode(userJson);
 
       final payload = {
         "user_id": userData['id'],
-        "kategori_wilayah": "01", // Default atau sesuaikan
+        "kategori_wilayah": "01",
+        "waktu_terbit_ktp": DateTime.now().toIso8601String(),
+        "waktu_terbit_kk": DateTime.now().toIso8601String(),
+
         "provinsi": _selProvKtp?['id'],
         "kabupaten": _selKabKtp?['id'],
         "kecamatan": _selKecKtp?['id'],
@@ -64,6 +99,7 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
         "rt_rw": _rtRwKtp.text,
         "kode_pos": _kodePosKtp.text,
         "alamat_ktp": _alamatKtp.text,
+
         "provinsi_domisili": _selProvDom?['id'],
         "kabupaten_domisili": _selKabDom?['id'],
         "kecamatan_domisili": _selKecDom?['id'],
@@ -71,33 +107,88 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
         "rt_rw_domisili": _rtRwDom.text,
         "kode_pos_domisili": _kodePosDom.text,
         "alamat_ktp_domisili": _alamatDom.text,
+
         "is_reference": 0,
       };
 
-      final res = await AddressService.saveAddress(payload);
-      if (res['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Alamat Berhasil Disimpan')),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
+      final result = await AddressService.saveAddress(payload);
+
+      if (!mounted) return;
+
       setState(() => _isLoading = false);
+
+      // ===== CEK RESPONSE =====
+      if (result['success'] == true) {
+
+        // Optional simpan address_id
+        final addressId = result['data']?['id']?.toString() ?? '';
+
+        if (addressId.isNotEmpty) {
+          await prefs.setString('address_id', addressId);
+
+          final userDataString = prefs.getString('user_data') ?? '{}';
+          final updatedUserData = jsonDecode(userDataString);
+
+          updatedUserData['address_id'] = addressId;
+
+          await prefs.setString(
+            'user_data',
+            jsonEncode(updatedUserData),
+          );
+
+          debugPrint('Saved address_id: $addressId');
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data alamat berhasil disimpan!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pop(context);
+
+      } else {
+
+        String errorMsg =
+            result['message']?.toString() ??
+            'Gagal menyimpan data alamat';
+
+        if (result['errors'] != null) {
+          errorMsg = result['errors'].toString();
+        }
+
+        throw Exception(errorMsg);
+      }
+
+    } catch (e) {
+
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
-        title: const Text('Data Alamat'),
+        title: const Text(
+          'Data Alamat',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: _isLoading && _listProv.isEmpty
           ? const Center(child: CircularProgressIndicator())
@@ -230,7 +321,30 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
                   _buildLongTextField('Alamat :', _alamatDom),
 
                   const SizedBox(height: 24),
-                  _buildSimpanButton(),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _simpan,
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+
+                      child: const Text(
+                        'SIMPAN',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -330,7 +444,7 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
       children: [
         Expanded(
           child: _buildField('RT/RW', rtRw),
-        ), // Menggunakan _buildField yang sudah standar
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildField(
@@ -364,7 +478,7 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
             keyboardType: keyboardType,
             style: const TextStyle(fontSize: 13),
             decoration: const InputDecoration(
-              border: InputBorder.none, // Menghilangkan border bawaan TextField
+              border: InputBorder.none, 
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
@@ -394,35 +508,13 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
             maxLines: 2,
             style: const TextStyle(fontSize: 13),
             decoration: const InputDecoration(
-              border: InputBorder.none, // Menghilangkan border bawaan TextField
+              border: InputBorder.none,
               contentPadding: EdgeInsets.all(12),
             ),
           ),
         ),
         const SizedBox(height: 10),
       ],
-    );
-  }
-
-  Widget _buildSimpanButton() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _simpan,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(color: Colors.white),
-              )
-            : const Text('SIMPAN'),
-      ),
     );
   }
 }

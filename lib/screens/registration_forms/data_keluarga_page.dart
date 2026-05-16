@@ -50,10 +50,21 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
   ];
 
   Future<void> _simpan() async {
-    if (_tanggalLahirController.text.isEmpty) {
+    if (_namaController.text.trim().isEmpty ||
+        _selectedHubungan == null ||
+        _selectedJenisKelamin == null ||
+        _noKTPController.text.trim().isEmpty ||
+        _tempatLahirController.text.trim().isEmpty ||
+        _tanggalLahirController.text.trim().isEmpty ||
+        _noKKController.text.trim().isEmpty) {
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tanggal lahir wajib diisi')),
+        const SnackBar(
+          content: Text('Semua field wajib diisi'),
+          backgroundColor: Colors.orange,
+        ),
       );
+
       return;
     }
 
@@ -63,20 +74,23 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString('user_data');
       final userData = jsonDecode(userJson!);
+
       final int userId = userData['id'];
-      
-      // Konversi format tanggal dari DD/MM/YYYY ke YYYY-MM-DD
+
+      // Konversi tanggal
       final dateParts = _tanggalLahirController.text.split('/');
-      final formattedDate = "${dateParts[2]}-${dateParts[1]}-${dateParts[0]}";
+
+      final formattedDate =
+          "${dateParts[2]}-${dateParts[1]}-${dateParts[0]}";
 
       final Map<String, dynamic> payload = {
         "user_id": userId,
-        "name": _namaController.text,           
-        "relationship": _selectedHubungan,     
-        "gender": _selectedJenisKelamin,       
-        "ktp": _noKTPController.text,         
-        "birth_place": _tempatLahirController.text, 
-        "birth_date": formattedDate,        
+        "name": _namaController.text,
+        "relationship": _selectedHubungan,
+        "gender": _selectedJenisKelamin,
+        "ktp": _noKTPController.text,
+        "birth_place": _tempatLahirController.text,
+        "birth_date": formattedDate,
         "no_kk": _noKKController.text,
       };
 
@@ -85,22 +99,32 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Data Keluarga berhasil disimpan'),
             backgroundColor: Colors.green,
           ),
         );
+
         Navigator.pop(context);
+
       } else {
-        String errorMessage = result['message'] ?? 'Gagal menyimpan data';
+
+        String errorMessage =
+            result['message'] ?? 'Gagal menyimpan data';
+
         if (result['errors'] != null) {
           errorMessage = result['errors'].toString();
         }
+
         throw errorMessage;
       }
+
     } catch (e) {
+
       setState(() => _isLoading = false);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal: ${e.toString()}'),
@@ -113,11 +137,13 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
-        title: const Text('Data Keluarga'),
+        title: const Text('Data Keluarga', style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -155,19 +181,20 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
                   _buildDateField(_tanggalLahirController),
                   const SizedBox(height: 24),
 
-                  Align(
-                    alignment: Alignment.centerRight,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: _simpan,
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
                       ),
+
                       child: const Text(
                         'SIMPAN',
                         style: TextStyle(

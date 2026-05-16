@@ -28,16 +28,33 @@ class _DataBpjsPageState extends State<DataBpjsPage> {
   bool _isLoading = false;
 
   Future<void> _simpan() async {
+    if (_nomorBpjsKesehatan.text.trim().isEmpty ||
+        _nomorBpjsKetenagakerjaan.text.trim().isEmpty ||
+        _statusBpjsController.text.trim().isEmpty ||
+        _catatanBpjsController.text.trim().isEmpty) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field wajib diisi'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString('user_data');
+
       if (userJson == null) throw Exception("Sesi berakhir");
 
       final userData = jsonDecode(userJson);
-      
-      final int personalId = int.tryParse(userData['personal_id']?.toString() ?? '0') ?? 0;
+
+      final int personalId =
+          int.tryParse(userData['personal_id']?.toString() ?? '0') ?? 0;
 
       if (personalId == 0) {
         throw Exception("ID Personal tidak ditemukan. Silakan login ulang.");
@@ -51,21 +68,40 @@ class _DataBpjsPageState extends State<DataBpjsPage> {
         "catatan_bpjs": _catatanBpjsController.text,
       };
 
-      final result = await PersonalService.updatePersonal(personalId, payload);
+      final result = await PersonalService.updatePersonal(
+        personalId,
+        payload,
+      );
 
       if (result['success'] == true) {
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data BPJS Berhasil Disimpan'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Data BPJS Berhasil Disimpan'),
+            backgroundColor: Colors.green,
+          ),
         );
+
         Navigator.pop(context);
+
       } else {
-        throw Exception(result['message']);
+
+        throw Exception(
+          result['message'] ?? 'Gagal menyimpan data',
+        );
       }
+
     } catch (e) {
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
       );
+
     } finally {
+
       setState(() => _isLoading = false);
     }
   }
@@ -73,11 +109,13 @@ class _DataBpjsPageState extends State<DataBpjsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
-        title: const Text('Data BPJS'),
+        title: const Text('Data BPJS', style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),),
       ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
@@ -97,19 +135,29 @@ class _DataBpjsPageState extends State<DataBpjsPage> {
 
                 const SizedBox(height: 12),
 
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: _simpan,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _simpan,
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+
+                      child: const Text(
+                        'SIMPAN',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    child: const Text('SIMPAN', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                ),
               ],
             ),
           ),
