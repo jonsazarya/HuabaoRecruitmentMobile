@@ -63,7 +63,7 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 93, 155, 1),
         foregroundColor: Colors.white,
-        title: const Text('Ubah Email'),
+        title: const Text('Ubah Email', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
