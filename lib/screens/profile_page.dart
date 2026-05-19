@@ -4,8 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:recruitment_mobile/services/personal_service.dart';
-
-// ─────────────────────────── SKELETON WIDGET ───────────────────────────
+import 'package:flutter_animate/flutter_animate.dart';
 
 class _SkeletonBox extends StatefulWidget {
   final double width;
@@ -171,7 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         ],
-                      ),
+                      ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.2),
                       const SizedBox(height: 28),
                       // Profile card skeleton
                       Container(

@@ -12,6 +12,7 @@ import 'package:recruitment_mobile/screens/menu/service_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:recruitment_mobile/services/personal_service.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class _SkeletonBox extends StatefulWidget {
   final double width;
@@ -564,7 +565,6 @@ class _HomeBodyState extends State<_HomeBody> {
     );
   }
 
-  // ─── REAL HEADER ───
   Widget _buildRealHeader() {
     return Stack(
       children: [
@@ -592,32 +592,23 @@ class _HomeBodyState extends State<_HomeBody> {
                         const SizedBox(width: 10),
                         const Text(
                           'Recruitment',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
-                    ),
+                    ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.2),
+                    // Avatar dengan animasi dari kanan
                     Container(
-                      width: 48,
-                      height: 48,
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(255, 0, 0, 0),
-                        shape: BoxShape.circle,
-                      ),
+                      width: 48, height: 48,
+                      decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
                       child: Padding(
                         padding: const EdgeInsets.all(2),
-                        child: Image.asset(
-                          _getProfileImage(userPersonalData?['gender']),
-                          fit: BoxFit.contain,
-                        ),
+                        child: Image.asset(_getProfileImage(userPersonalData?['gender']), fit: BoxFit.contain),
                       ),
-                    ),
+                    ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.2),
                   ],
                 ),
                 const SizedBox(height: 24),
+                // Greeting card dengan slide dari bawah
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
@@ -628,22 +619,15 @@ class _HomeBodyState extends State<_HomeBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _getGreeting(),
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
+                      Text(_getGreeting(), style: const TextStyle(color: Colors.white70, fontSize: 13)),
                       const SizedBox(height: 4),
                       Text(
                         'Hai, ${_user?.displayName ?? 'Pengguna'}!',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
-                ),
+                ).animate().fadeIn(delay: 300.ms, duration: 500.ms).slideY(begin: 0.3),
               ],
             ),
           ),
@@ -696,17 +680,11 @@ class _HomeBodyState extends State<_HomeBody> {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 0.70,
-                children: _allMenus.map((menu) {
+                children: _allMenus.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final menu = entry.value;
                   return GestureDetector(
-                    onTap: () {
-                      final page = menu['page'];
-                      if (page != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => page as Widget),
-                        );
-                      }
-                    },
+                    onTap: () { /* ... */ },
                     child: Column(
                       children: [
                         Container(
@@ -715,21 +693,15 @@ class _HomeBodyState extends State<_HomeBody> {
                             color: (menu['color'] as Color).withOpacity(0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
-                            menu['icon'] as IconData,
-                            color: menu['color'] as Color,
-                            size: 24,
-                          ),
+                          child: Icon(menu['icon'] as IconData, color: menu['color'] as Color, size: 24),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          menu['title'] as String,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 10),
-                        ),
+                        Text(menu['title'] as String, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10)),
                       ],
                     ),
-                  );
+                  ).animate(delay: (index * 80).ms)
+                  .fadeIn(duration: 350.ms)
+                  .scale(begin: const Offset(0.8, 0.8));
                 }).toList(),
               ),
             ],
@@ -822,7 +794,7 @@ class _HomeBodyState extends State<_HomeBody> {
                       ),
                     ],
                   ),
-                );
+                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, duration: 400.ms);
               }),
             ],
           ),
@@ -839,19 +811,12 @@ class _HomeBodyState extends State<_HomeBody> {
             autoPlayInterval: const Duration(seconds: 3),
           ),
           items: _banners.map((image) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  image,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(image, width: double.infinity, fit: BoxFit.cover),
             );
           }).toList(),
-        ),
+        ).animate().fadeIn(delay: 500.ms, duration: 600.ms),
 
         const SizedBox(height: 120),
       ],
