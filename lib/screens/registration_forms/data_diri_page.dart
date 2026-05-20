@@ -89,7 +89,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
     super.dispose();
   }
 
-  // ─── GET data dari backend, isi controller jika sudah ada ───
+  // GET
   Future<void> _loadData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -114,7 +114,6 @@ class _DataDiriPageState extends State<DataDiriPage> {
         _jurusanController.text     = data['education_major'] ?? '';
         _asalSekolahController.text  = data['education_instansi'] ?? '';
 
-        // Format tanggal ISO (2000-01-25) → dd/MM/yyyy
         final birthDate = data['birth_date']?.toString() ?? '';
         if (birthDate.isNotEmpty) {
           final dateOnly = birthDate.split('T')[0];
@@ -136,7 +135,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
         _selectedLokasiKerja = _lokasiKerjaOptions.contains(data['lokasi_kerja_yang_diharapkan'])
             ? data['lokasi_kerja_yang_diharapkan'] : null;
 
-        _personalId = data['id']; // mode UPDATE
+        _personalId = data['id']; 
       }
     } catch (e) {
       debugPrint('Error load data diri: $e');
@@ -219,10 +218,10 @@ class _DataDiriPageState extends State<DataDiriPage> {
       Map<String, dynamic> result;
 
       if (_personalId != null) {
-        // ── Mode UPDATE ──
+        // UPDATE
         result = await PersonalService.updatePersonal(_personalId!, payload);
       } else {
-        // ── Mode CREATE ──
+        // CREATE
         result = await PersonalService.createPersonal(payload);
       }
 
@@ -230,7 +229,6 @@ class _DataDiriPageState extends State<DataDiriPage> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
-        // Simpan personal_id ke SharedPreferences jika baru dibuat
         if (_personalId == null) {
           final personalId = result['data']?['id']?.toString() ?? '';
           if (personalId.isNotEmpty) {
@@ -394,7 +392,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
     );
   }
 
-  // ─── WIDGETS HELPER ───
+  // WIDGETS HELPER
 
   Widget _buildInfoBox() {
     return Container(

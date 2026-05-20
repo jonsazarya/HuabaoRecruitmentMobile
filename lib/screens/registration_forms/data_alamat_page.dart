@@ -197,6 +197,9 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildInfoBox(),
+                  const SizedBox(height: 20),
+
                   _sectionTitle('Alamat KTP'),
                   const SizedBox(height: 12),
 
@@ -348,6 +351,41 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildInfoBox() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.shade300),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.info_outline, color: Colors.orange, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Mohon diperhatikan sebelum mengisi formulir',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Pastikan data yang diinput sudah benar dan dapat dipertanggungjawabkan. '
+            'Jika data atau dokumen pendukung belum siap, silakan isi formulir di lain waktu.',
+            style: TextStyle(fontSize: 12, height: 1.5),
+            textAlign: TextAlign.justify,
+          ),
+        ],
+      ),
     );
   }
 
