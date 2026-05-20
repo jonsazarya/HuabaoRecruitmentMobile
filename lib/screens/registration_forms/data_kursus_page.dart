@@ -163,7 +163,7 @@ class _DataKursusPageState extends State<DataKursusPage> {
 
   Widget _buildLabel(String label) {
     return Text(label,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500));
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600));
   }
 
   Widget _buildField(String label, TextEditingController controller,

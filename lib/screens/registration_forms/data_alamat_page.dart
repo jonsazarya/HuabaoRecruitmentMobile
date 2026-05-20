@@ -365,7 +365,7 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
   Widget _buildLabel(String label) {
     return Text(
       label,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
     );
   }
 
@@ -399,7 +399,7 @@ class _DataAlamatPageState extends State<DataAlamatPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 4),
         Container(

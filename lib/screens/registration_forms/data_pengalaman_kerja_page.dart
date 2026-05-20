@@ -205,7 +205,7 @@ class _DataPengalamanKerjaPageState extends State<DataPengalamanKerjaPage> {
   Widget _buildLabel(String label) {
     return Text(
       label,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
     );
   }
 

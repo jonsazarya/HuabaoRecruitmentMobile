@@ -216,7 +216,7 @@ class _DataKeluargaPageState extends State<DataKeluargaPage> {
   Widget _buildLabel(String label) {
     return Text(
       label,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
     );
   }
 
