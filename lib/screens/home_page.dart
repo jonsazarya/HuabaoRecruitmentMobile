@@ -596,7 +596,6 @@ class _HomeBodyState extends State<_HomeBody> {
                         ),
                       ],
                     ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.2),
-                    // Avatar dengan animasi dari kanan
                     Container(
                       width: 48, height: 48,
                       decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
@@ -684,7 +683,15 @@ class _HomeBodyState extends State<_HomeBody> {
                   final index = entry.key;
                   final menu = entry.value;
                   return GestureDetector(
-                    onTap: () { /* ... */ },
+                    onTap: () {
+                      final page = menu['page'];
+                      if (page != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => page as Widget),
+                        );
+                      }
+                    },
                     child: Column(
                       children: [
                         Container(

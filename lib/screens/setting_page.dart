@@ -10,8 +10,9 @@ import 'package:recruitment_mobile/screens/settings/language_page.dart';
 import 'package:recruitment_mobile/screens/settings/about_app_page.dart';
 import 'package:recruitment_mobile/screens/settings/help_page.dart';
 import 'package:recruitment_mobile/screens/settings/privacy_policy_page.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-// ─────────────────────────── SKELETON WIDGET ───────────────────────────
+// SKELETON WIDGET 
 
 class _SkeletonBox extends StatefulWidget {
   final double width;
@@ -70,7 +71,7 @@ class _SkeletonBoxState extends State<_SkeletonBox>
   }
 }
 
-// ─────────────────────────── SETTING PAGE ───────────────────────────
+// SETTING PAGE 
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -88,9 +89,6 @@ class _SettingPageState extends State<SettingPage> {
     _simulateLoading();
   }
 
-  /// Simulasi loading ringan (ganti dengan fetch data nyata jika ada).
-  /// Jika halaman setting tidak butuh fetch data, cukup set 800ms
-  /// agar transisi terasa natural dan konsisten dengan halaman lain.
   Future<void> _simulateLoading() async {
     await Future.delayed(const Duration(milliseconds: 800));
     if (mounted) setState(() => _isLoading = false);
@@ -110,7 +108,7 @@ class _SettingPageState extends State<SettingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── HEADER ────────────────────────────────────────
+            // HEADER 
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 30, 16, 16),
@@ -130,7 +128,7 @@ class _SettingPageState extends State<SettingPage> {
                     ),
                   ),
                 ],
-              ),
+              ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.2),
             ),
 
             const SizedBox(height: 8),
@@ -142,16 +140,15 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  // ─── SKELETON ───
+  // SKELETON 
   Widget _buildSkeleton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section label skeleton
+          // Section label
           _buildSkeletonSectionLabel(),
-          _buildSkeletonItem(),
           _buildSkeletonItem(),
           _buildSkeletonItem(),
 
@@ -170,7 +167,7 @@ class _SettingPageState extends State<SettingPage> {
 
           const SizedBox(height: 24),
 
-          // Logout button skeleton
+          // Logout button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
@@ -230,12 +227,12 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  // ─── REAL CONTENT ───
+  // REAL CONTENT 
   Widget _buildContent(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── SECTION AKUN ──────────────────────────────────
+        // SECTION AKUN 
         _buildSectionTitle('Akun'),
         _buildSettingItem(
           context,
@@ -255,19 +252,10 @@ class _SettingPageState extends State<SettingPage> {
             MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
           ),
         ),
-        _buildSettingItem(
-          context,
-          Icons.email_outlined,
-          'Ubah Email',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChangeEmailPage()),
-          ),
-        ),
 
         const SizedBox(height: 8),
 
-        // ── SECTION APLIKASI ──────────────────────────────
+        // SECTION APLIKASI 
         _buildSectionTitle('Aplikasi'),
         _buildSettingItem(
           context,
@@ -291,7 +279,7 @@ class _SettingPageState extends State<SettingPage> {
 
         const SizedBox(height: 8),
 
-        // ── SECTION LAINNYA ───────────────────────────────
+        // SECTION LAINNYA
         _buildSectionTitle('Lainnya'),
         _buildSettingItem(
           context,

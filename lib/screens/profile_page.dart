@@ -63,7 +63,7 @@ class _SkeletonBoxState extends State<_SkeletonBox>
   }
 }
 
-// ─────────────────────────── PROFILE PAGE ───────────────────────────
+// PROFILE PAGE 
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -133,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header skeleton
+          // Header
           Stack(
             children: [
               Container(
@@ -172,7 +172,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.2),
                       const SizedBox(height: 28),
-                      // Profile card skeleton
+                      // Profile card
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
@@ -219,7 +219,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           const SizedBox(height: 8),
 
-          // Section + items skeleton (Informasi Akun)
+          // Informasi Akun
           _buildSkeletonSection(3),
           const SizedBox(height: 8),
 
@@ -324,7 +324,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ─── REAL CONTENT ───
+  // REAL CONTENT
   Widget _buildContent() {
     return SingleChildScrollView(
       child: Column(
