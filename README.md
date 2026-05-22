@@ -1,3 +1,5 @@
+![Banner](https://raw.githubusercontent.com/jonsazarya/HuabaoRecruitmentMobile/main/assets/images/banner1.png)
+
 # 🏢 Huabao Recruitment Mobile
 
 Aplikasi mobile rekrutmen milik **Huabao** yang dibangun menggunakan **Flutter**, mendukung platform Android, iOS, Web, Linux, macOS, dan Windows.
