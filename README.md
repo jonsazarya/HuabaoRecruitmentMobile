@@ -177,12 +177,6 @@ flutter build ios --release
 
 ---
 
-## 📄 Lisensi
-
-Project ini bersifat privat milik **Huabao Recruitment**. Seluruh hak cipta dilindungi.
-
----
-
 ## 📞 Kontak
 
 Untuk informasi lebih lanjut, silakan hubungi tim pengembang melalui repository ini.
