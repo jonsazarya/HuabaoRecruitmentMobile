@@ -25,7 +25,6 @@ class _DataDiriPageState extends State<DataDiriPage> {
 
   bool _isNamaDisabled = false;
   bool _isKtpDisabled = false;
-  bool _hideNamaField = false;
   
   int? _personalId;
 

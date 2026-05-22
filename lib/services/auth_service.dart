@@ -10,7 +10,7 @@ class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // ── Login Email 
+  // ── Login Email
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
@@ -31,11 +31,6 @@ class AuthService {
 
       final firebaseToken = await credential.user?.getIdToken(true);
 
-      debugPrint('=== FIREBASE TOKEN ===');
-      debugPrint(firebaseToken);
-      debugPrint('TOKEN LENGTH: ${firebaseToken?.length}');
-      debugPrint('======================');
-
       if (firebaseToken == null) {
         return {'success': false, 'message': 'Firebase token gagal'};
       }
@@ -44,7 +39,7 @@ class AuthService {
         '${Env.baseUrl}/auth/firebase-login',
         {
           'firebase_uid': credential.user?.uid,
-          'email': credential.user?.email,
+          'email'       : credential.user?.email,
         },
       );
 
@@ -52,10 +47,10 @@ class AuthService {
 
       if (response['success'] == true) {
         await _saveUserData(
-          firebaseToken: firebaseToken,
-          backendToken: response['token'] ?? '',
-          userData: response['user'],
-          uid: credential.user?.uid ?? '',
+          firebaseToken : firebaseToken,
+          backendToken  : response['token'] ?? '',
+          userData      : response['user'],
+          uid           : credential.user?.uid ?? '',
         );
       }
 
@@ -67,7 +62,7 @@ class AuthService {
     }
   }
 
-  // ── Register 
+  // ── Register
   static Future<Map<String, dynamic>> register({
     required String name,
     required String email,
@@ -81,35 +76,39 @@ class AuthService {
         password: password,
       );
       await credential.user?.updateDisplayName(name);
+
+      // Firebase kirim email verifikasi
       await credential.user?.sendEmailVerification();
-      
+
       final firebaseToken = await credential.user?.getIdToken();
 
       final response = await _postDirect(
         '${Env.baseUrl}/auth/register',
         {
-          'name': name,
-          'email': email,
-          'password': password,
-          'password_confirmation': password,
-          'ktp': ktp,
-          'phone': phone,
-          'firebase_token': firebaseToken,
+          'name'                  : name,
+          'email'                 : email,
+          'password'              : password,
+          'password_confirmation' : password,
+          'ktp'                   : ktp,
+          'phone'                 : phone,
+          'firebase_token'        : firebaseToken,
         },
       );
 
       debugPrint('Register Response: $response');
 
       if (response['success'] == true) {
-        final userData = response['data'] ?? response['user'] ?? {};
-  
-        // Tambahkan name dari input karena API tidak mengembalikannya
-        userData['name'] = name;
+        // Gabungkan data response + name dari input
+        final rawData = Map<String, dynamic>.from(
+          response['data'] ?? response['user'] ?? {},
+        );
+        rawData['name'] = name;
+
         await _saveUserData(
-          firebaseToken: firebaseToken ?? '',
-          backendToken: response['token'] ?? '',
-          userData: response['user'] ?? response['data'],
-          uid: credential.user?.uid ?? '',
+          firebaseToken : firebaseToken ?? '',
+          backendToken  : response['token'] ?? '',
+          userData      : rawData,
+          uid           : credential.user?.uid ?? '',
         );
       }
 
@@ -121,7 +120,7 @@ class AuthService {
     }
   }
 
-  // ── Google Login 
+  // ── Google Login
   static Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
       final googleUser = await _googleSignIn.signIn();
@@ -136,25 +135,29 @@ class AuthService {
       );
 
       final userCredential = await _auth.signInWithCredential(credential);
-      final firebaseToken = await userCredential.user?.getIdToken();
+      final firebaseToken  = await userCredential.user?.getIdToken();
 
       if (firebaseToken == null) {
         return {'success': false, 'message': 'Firebase token gagal'};
       }
 
+      // ← Kirim firebase_uid & email, sama seperti login email
       final response = await _postDirect(
         '${Env.baseUrl}/auth/firebase-login',
-        {'idToken': firebaseToken},
+        {
+          'firebase_uid': userCredential.user?.uid,
+          'email'       : userCredential.user?.email,
+        },
       );
 
       debugPrint('Google Login Response: $response');
 
       if (response['success'] == true) {
         await _saveUserData(
-          firebaseToken: firebaseToken,
-          backendToken: response['token'] ?? '',
-          userData: response['user'],
-          uid: userCredential.user?.uid ?? '',
+          firebaseToken : firebaseToken,
+          backendToken  : response['token'] ?? '',
+          userData      : response['user'],
+          uid           : userCredential.user?.uid ?? '',
         );
       }
 
@@ -164,7 +167,7 @@ class AuthService {
     }
   }
 
-  // ── Logout 
+  // ── Logout
   static Future<void> logout() async {
     await _auth.signOut();
     await _googleSignIn.signOut();
@@ -172,13 +175,13 @@ class AuthService {
     await prefs.clear();
   }
 
-  // ── Get Backend Token 
+  // ── Get Backend Token
   static Future<String?> getBackendToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('backend_token');
   }
 
-  // ── Get User Data 
+  // ── Get User Data
   static Future<Map<String, dynamic>> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     final userDataString = prefs.getString('user_data') ?? '{}';
@@ -189,7 +192,7 @@ class AuthService {
     }
   }
 
-  // ── Save User Data 
+  // ── Save User Data
   static Future<void> _saveUserData({
     required String firebaseToken,
     required String backendToken,
@@ -209,7 +212,6 @@ class AuthService {
       await prefs.setString('email', userData['email']?.toString() ?? '');
     }
 
-    // Verifikasi tersimpan
     debugPrint('=== SAVED USER DATA ===');
     debugPrint('backend_token: $backendToken');
     debugPrint('user_id: ${userData?['id']}');
@@ -217,8 +219,7 @@ class AuthService {
     debugPrint('=======================');
   }
 
-  // Post langsung tanpa ApiService wrapper
-  // Digunakan untuk auth agar response tidak dibungkus
+  // ── Post langsung tanpa ApiService wrapper
   static Future<Map<String, dynamic>> _postDirect(
     String url,
     Map<String, dynamic> body,
@@ -228,7 +229,7 @@ class AuthService {
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          'Accept'       : 'application/json',
         },
         body: jsonEncode(body),
       ).timeout(const Duration(seconds: 30));
@@ -243,7 +244,7 @@ class AuthService {
     }
   }
 
-  // ── Firebase Error Messages ───────────────────────────
+  // ── Firebase Error Messages
   static String _firebaseError(String code) {
     switch (code) {
       case 'user-not-found':
