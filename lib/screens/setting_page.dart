@@ -4,7 +4,6 @@ import 'package:recruitment_mobile/services/auth_service.dart';
 import 'package:recruitment_mobile/screens/auth/login_page.dart';
 import 'package:recruitment_mobile/screens/settings/edit_profile_page.dart';
 import 'package:recruitment_mobile/screens/settings/change_password_page.dart';
-import 'package:recruitment_mobile/screens/settings/change_email_page.dart';
 import 'package:recruitment_mobile/screens/settings/notification_page.dart';
 import 'package:recruitment_mobile/screens/settings/language_page.dart';
 import 'package:recruitment_mobile/screens/settings/about_app_page.dart';

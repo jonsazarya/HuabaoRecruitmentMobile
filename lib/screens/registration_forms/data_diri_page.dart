@@ -12,16 +12,21 @@ class DataDiriPage extends StatefulWidget {
 }
 
 class _DataDiriPageState extends State<DataDiriPage> {
-  final _namaController = TextEditingController();
-  final _ktpController = TextEditingController();
+  final _namaController        = TextEditingController();
+  final _ktpController         = TextEditingController();
   final _tempatLahirController = TextEditingController();
   final _tanggalLahirController = TextEditingController();
-  final _nomorAK1Controller = TextEditingController();
-  final _jurusanController = TextEditingController();
+  final _nomorAK1Controller    = TextEditingController();
+  final _jurusanController     = TextEditingController();
   final _asalSekolahController = TextEditingController();
 
   bool _isLoading = false;
   bool _isLoadingData = true;
+
+  bool _isNamaDisabled = false;
+  bool _isKtpDisabled = false;
+  bool _hideNamaField = false;
+  
   int? _personalId;
 
   String? _selectedAgama;
@@ -31,44 +36,23 @@ class _DataDiriPageState extends State<DataDiriPage> {
   String? _selectedLokasiKerja;
 
   final List<String> _agamaOptions = [
-    'Islam',
-    'Kristen',
-    'Katholik',
-    'Hindu',
-    'Budha',
-    'Konghucu',
+    'Islam', 'Kristen', 'Katholik', 'Hindu', 'Budha', 'Konghucu',
   ];
 
-  final List<String> _jenisKelaminOptions = [
-    'Laki-laki',
-    'Perempuan',
-  ];
+  final List<String> _jenisKelaminOptions = ['Laki-laki', 'Perempuan'];
 
   final List<String> _statusPernikahanOptions = [
-    'Tidak Kawin',
-    'Kawin Belum Tercatat',
-    'Kawin Tercatat',
-    'Cerai Hidup',
-    'Cerai Mati',
+    'Tidak Kawin', 'Kawin Belum Tercatat', 'Kawin Tercatat',
+    'Cerai Hidup', 'Cerai Mati',
   ];
 
   final List<String> _pendidikanOptions = [
-    'SD/Paket A/MI',
-    'SMP/Paket B/Mts',
-    'SMA/SMK/Paket C/MA',
-    'D1',
-    'D2',
-    'D3',
-    'D4',
-    'S1',
-    'S2',
-    'S3',
+    'SD/Paket A/MI', 'SMP/Paket B/Mts', 'SMA/SMK/Paket C/MA',
+    'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3',
   ];
 
   final List<String> _lokasiKerjaOptions = [
-    'Jakarta',
-    'Morowali',
-    'Dimana Saja',
+    'Jakarta', 'Morowali', 'Dimana Saja',
   ];
 
   @override
@@ -89,10 +73,9 @@ class _DataDiriPageState extends State<DataDiriPage> {
     super.dispose();
   }
 
-  // GET
   Future<void> _loadData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs    = await SharedPreferences.getInstance();
       final userJson = prefs.getString('user_data');
       if (userJson == null) {
         setState(() => _isLoadingData = false);
@@ -100,14 +83,16 @@ class _DataDiriPageState extends State<DataDiriPage> {
       }
 
       final userData = jsonDecode(userJson);
-      final userId = userData['id'];
+      final userId   = userData['id'];
 
       final result = await PersonalService.getPersonalByUserId(userId);
 
       if (result['success'] == true && result['data'] != null) {
         final data = result['data'];
 
-        _namaController.text        = data['name'] ?? '';
+         _namaController.text = data['name']?.toString().isNotEmpty == true
+          ? data['name']
+          : userData['name'] ?? '';
         _ktpController.text         = data['ktp'] ?? '';
         _tempatLahirController.text  = data['birth_place'] ?? '';
         _nomorAK1Controller.text    = data['nomor_pencarikerja'] ?? '';
@@ -117,13 +102,12 @@ class _DataDiriPageState extends State<DataDiriPage> {
         final birthDate = data['birth_date']?.toString() ?? '';
         if (birthDate.isNotEmpty) {
           final dateOnly = birthDate.split('T')[0];
-          final parts = dateOnly.split('-');
+          final parts    = dateOnly.split('-');
           if (parts.length == 3) {
             _tanggalLahirController.text = '${parts[2]}/${parts[1]}/${parts[0]}';
           }
         }
 
-        // Dropdown — hanya set jika value ada di list
         _selectedAgama = _agamaOptions.contains(data['religion'])
             ? data['religion'] : null;
         _selectedJenisKelamin = _jenisKelaminOptions.contains(data['gender'])
@@ -135,7 +119,15 @@ class _DataDiriPageState extends State<DataDiriPage> {
         _selectedLokasiKerja = _lokasiKerjaOptions.contains(data['lokasi_kerja_yang_diharapkan'])
             ? data['lokasi_kerja_yang_diharapkan'] : null;
 
-        _personalId = data['id']; 
+        _personalId = data['id'];
+
+        _isNamaDisabled =
+          data['name'] != null &&
+          data['name'].toString().trim().isNotEmpty;
+
+        _isKtpDisabled =
+          data['ktp'] != null &&
+          data['ktp'].toString().trim().isNotEmpty;
       }
     } catch (e) {
       debugPrint('Error load data diri: $e');
@@ -147,9 +139,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
   String _toIsoDate(String date) {
     try {
       final parts = date.split('/');
-      if (parts.length == 3) {
-        return '${parts[2]}-${parts[1]}-${parts[0]}';
-      }
+      if (parts.length == 3) return '${parts[2]}-${parts[1]}-${parts[0]}';
       return date;
     } catch (e) {
       return date;
@@ -157,8 +147,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
   }
 
   Future<void> _simpan() async {
-    if (_ktpController.text.trim().isEmpty ||
-        _selectedAgama == null ||
+    if (_selectedAgama == null ||
         _selectedJenisKelamin == null ||
         _tempatLahirController.text.trim().isEmpty ||
         _tanggalLahirController.text.trim().isEmpty ||
@@ -180,48 +169,43 @@ class _DataDiriPageState extends State<DataDiriPage> {
     setState(() => _isLoading = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? userJson = prefs.getString('user_data');
+      final prefs    = await SharedPreferences.getInstance();
+      final userJson = prefs.getString('user_data');
+      if (userJson == null) throw Exception('Sesi user tidak ditemukan. Silakan login kembali.');
 
-      if (userJson == null) {
-        throw Exception('Sesi user tidak ditemukan. Silakan login kembali.');
-      }
-
-      final userData = jsonDecode(userJson);
+      final userData    = jsonDecode(userJson);
       final int localUserId = userData['id'];
-      final email = FirebaseAuth.instance.currentUser?.email ?? '';
+      final email       = FirebaseAuth.instance.currentUser?.email ?? '';
 
       final payload = {
-        'user_id': localUserId,
-        'name': _namaController.text.trim(),
-        'ktp': _ktpController.text.trim(),
-        'status': 'Pelamar',
-        'kk': '-',
-        'gender': _selectedJenisKelamin ?? '-',
-        'religion': _selectedAgama ?? '-',
-        'birth_place': _tempatLahirController.text.trim(),
-        'birth_date': _toIsoDate(_tanggalLahirController.text),
-        'marital_status': _selectedStatusPernikahan ?? '-',
-        'nomor_pencarikerja': _nomorAK1Controller.text.trim(),
-        'education_stage': _selectedPendidikan ?? '-',
-        'education_major': _jurusanController.text.trim(),
-        'education_instansi': _asalSekolahController.text.trim(),
-        'lokasi_kerja_yang_diharapkan': _selectedLokasiKerja ?? '-',
-        'email': email,
-        'has_experience': 'Tidak',
-        'current_salary': 0,
-        'expected_salary': 0,
-        'phone': '-',
-        'no_wa': '-',
+        'user_id'                       : localUserId,
+        'name'                          : _namaController.text.trim(),
+        'ktp'                           : _ktpController.text.trim(),
+        'status'                        : 'Pelamar',
+        'kk'                            : '-',
+        'gender'                        : _selectedJenisKelamin ?? '-',
+        'religion'                      : _selectedAgama ?? '-',
+        'birth_place'                   : _tempatLahirController.text.trim(),
+        'birth_date'                    : _toIsoDate(_tanggalLahirController.text),
+        'marital_status'                : _selectedStatusPernikahan ?? '-',
+        'nomor_pencarikerja'            : _nomorAK1Controller.text.trim(),
+        'education_stage'               : _selectedPendidikan ?? '-',
+        'education_major'               : _jurusanController.text.trim(),
+        'education_instansi'            : _asalSekolahController.text.trim(),
+        'lokasi_kerja_yang_diharapkan'  : _selectedLokasiKerja ?? '-',
+        'email'                         : email,
+        'has_experience'                : 'Tidak',
+        'current_salary'                : 0,
+        'expected_salary'               : 0,
+        'phone'                         : '-',
+        'no_wa'                         : '-',
       };
 
       Map<String, dynamic> result;
 
       if (_personalId != null) {
-        // UPDATE
         result = await PersonalService.updatePersonal(_personalId!, payload);
       } else {
-        // CREATE
         result = await PersonalService.createPersonal(payload);
       }
 
@@ -264,10 +248,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Gagal: ${e.toString()}'), backgroundColor: Colors.red),
       );
     }
   }
@@ -296,13 +277,36 @@ class _DataDiriPageState extends State<DataDiriPage> {
 
                       const SizedBox(height: 20),
 
-                      _buildField('Nama Lengkap :', _namaController),
-
-                      _buildField(
-                        'Nomor KTP :',
-                        _ktpController,
-                        keyboardType: TextInputType.number,
+                      // Nama
+                      _buildLabel('Nama Lengkap :'),
+                      const SizedBox(height: 6),
+                      _buildConditionalField(
+                        _namaController,
+                        enabled: !_isNamaDisabled,
+                        hint: 'Nama belum diisi',
                       ),
+                      const SizedBox(height: 4),
+                      if (_personalId != null)
+                        Text(
+                          'Nama tidak dapat diubah di sini',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                        ),
+                      const SizedBox(height: 12),
+
+                      // NIK
+                      _buildLabel('Nomor KTP :'),
+                      const SizedBox(height: 6),
+                      _buildConditionalField(
+                        _ktpController,
+                        enabled: !_isKtpDisabled,
+                        hint: 'NIK belum diisi',
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'NIK tidak dapat diubah',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                      ),
+                      const SizedBox(height: 12),
 
                       _buildDropdown(
                         label: 'Agama :',
@@ -392,7 +396,7 @@ class _DataDiriPageState extends State<DataDiriPage> {
     );
   }
 
-  // WIDGETS HELPER
+  // ─── WIDGETS HELPER ───
 
   Widget _buildInfoBox() {
     return Container(
@@ -467,6 +471,48 @@ class _DataDiriPageState extends State<DataDiriPage> {
     );
   }
 
+  Widget _buildConditionalField(
+    TextEditingController controller, {
+    required bool enabled,
+    String hint = '-',
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: enabled
+            ? Colors.white
+            : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        style: TextStyle(
+          fontSize: 13,
+          color: enabled
+              ? Colors.black
+              : Colors.grey.shade600,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
+
+          suffixIcon: !enabled
+              ? Icon(
+                  Icons.lock_outline,
+                  size: 16,
+                  color: Colors.grey.shade400,
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
   Widget _buildDropdown({
     required String label,
     required String? value,
@@ -521,7 +567,6 @@ class _DataDiriPageState extends State<DataDiriPage> {
           suffixIcon: IconButton(
             icon: const Icon(Icons.calendar_today, size: 20),
             onPressed: () async {
-              // Tentukan initialDate dari nilai controller jika sudah terisi
               DateTime initialDate = DateTime(2000);
               if (controller.text.isNotEmpty) {
                 try {
