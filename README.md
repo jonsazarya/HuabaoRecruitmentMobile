@@ -15,7 +15,6 @@ Aplikasi mobile rekrutmen milik **Huabao** yang dibangun menggunakan **Flutter**
 ## 🚀 Fitur Utama
 
 - **Autentikasi** — Login menggunakan akun Google via Firebase Authentication
-- **Tampilan Lowongan** — Carousel slider untuk menampilkan lowongan secara menarik
 - **Navigasi Intuitif** — Curved bottom navigation bar untuk pengalaman pengguna yang nyaman
 - **Dokumen PDF** — Tampilan dokumen PDF langsung di dalam aplikasi
 - **Animasi** — Animasi UI yang halus menggunakan `flutter_animate`
