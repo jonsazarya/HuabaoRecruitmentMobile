@@ -21,6 +21,14 @@ class AuthService {
         password: password,
       );
 
+      if (credential.user?.emailVerified == false) {
+        await _auth.signOut();
+        return {
+          'success': false,
+          'message': 'Email belum diverifikasi. Silakan cek inbox Anda.',
+        };
+      }
+
       final firebaseToken = await credential.user?.getIdToken(true);
 
       debugPrint('=== FIREBASE TOKEN ===');
@@ -32,7 +40,6 @@ class AuthService {
         return {'success': false, 'message': 'Firebase token gagal'};
       }
 
-      // Langsung hit API tanpa ApiService agar response tidak dibungkus
       final response = await _postDirect(
         '${Env.baseUrl}/auth/firebase-login',
         {
@@ -74,6 +81,8 @@ class AuthService {
         password: password,
       );
       await credential.user?.updateDisplayName(name);
+      await credential.user?.sendEmailVerification();
+      
       final firebaseToken = await credential.user?.getIdToken();
 
       final response = await _postDirect(
@@ -92,6 +101,10 @@ class AuthService {
       debugPrint('Register Response: $response');
 
       if (response['success'] == true) {
+        final userData = response['data'] ?? response['user'] ?? {};
+  
+        // Tambahkan name dari input karena API tidak mengembalikannya
+        userData['name'] = name;
         await _saveUserData(
           firebaseToken: firebaseToken ?? '',
           backendToken: response['token'] ?? '',

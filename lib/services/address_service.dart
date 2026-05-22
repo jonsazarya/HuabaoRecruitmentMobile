@@ -30,4 +30,22 @@ class AddressService {
       data
     );
   }
+
+  static Future<Map<String, dynamic>> getAddress(
+    Map<String, dynamic> data
+    ) async {
+    return await ApiService.get(
+        '${Env.baseUrl}/addresses/{id}', 
+      data
+    );
+  }
+
+  static Future<Map<String, dynamic>> updateAddress(
+    Map<String, dynamic> data
+    ) async {
+    return await ApiService.post(
+        '${Env.baseUrl}/addresses', 
+      data
+    );
+  }
 }

@@ -19,7 +19,7 @@ class ApiService {
 
   // GET
   static Future<Map<String, dynamic>> get(
-    String url,
+    String url,[Map<String, dynamic> data = const {}]
   ) async {
     try {
       final response = await http.get(

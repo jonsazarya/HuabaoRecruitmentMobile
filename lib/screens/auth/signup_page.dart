@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:recruitment_mobile/services/auth_service.dart';
+import 'package:recruitment_mobile/screens/auth/email_verification_page.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -98,8 +99,7 @@ class _SignupPageState extends State<SignupPage> {
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('REGISTRASI',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -174,13 +174,15 @@ class _SignupPageState extends State<SignupPage> {
     setState(() => _isLoading = false);
 
     if (result['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registrasi berhasil! Silakan login.'),
-          backgroundColor: Colors.green,
+      // ← Arahkan ke halaman verifikasi email
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EmailVerificationPage(
+            email: _emailController.text.trim(),
+          ),
         ),
       );
-      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -196,8 +198,7 @@ class _SignupPageState extends State<SignupPage> {
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
     );
   }
